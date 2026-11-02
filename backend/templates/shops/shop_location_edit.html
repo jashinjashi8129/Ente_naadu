@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}ഷോപ്പ് ലൊക്കേഷൻ രജിസ്ട്രേഷൻ - {{ shop.name }} - എന്റെ നാട്{% endblock %}
+
+{% block extra_head %}
+<!-- Leaflet CSS & JS (Free, Zero-Cost OpenStreetMap via cdnjs) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha512-puJW3E/qXDqYd9IfhAI54BJEaWIfloJ7JKsGNbIVDwyLMQAt+IypCwVUDA9Wy53LI47PPX9ZXY++of972RgOZA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<style>
+  #shopLocationMap {
+    height: 480px;
+    width: 100%;
+    border-radius: 1.5rem;
+    z-index: 10;
+    background-color: #f1f5f9;
+  }
+  .leaflet-popup-content-wrapper {
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+  <!-- Breadcrumbs & Header -->
+  <div class="mb-8">
+    <div class="flex items-center space-x-2 text-xs font-bold text-slate-500 mb-2">
+      <a href="{% url 'shop-dashboard' %}" class="hover:text-emerald-700">ഷോപ്പ് ഡാഷ്‌ബോർഡ്</a>
+      <span>/</span>
+      <a href="{% url 'shop-detail' shop.id %}" class="hover:text-emerald-700">{{ shop.name }}</a>
+      <span>/</span>
+      <span class="text-slate-800">GPS ലൊക്കേഷൻ</span>
+    </div>
+
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-black text-slate-900 tracking-tight">
+          ഷോപ്പ് GPS ലൊക്കേഷൻ (Shop GPS Pin)
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-500 mt-1">
+          നാട്ടുകാർക്കും ഉപഭോക്താക്കൾക്കും മാപ്പിൽ നിങ്ങളുടെ കട കണ്ടെത്താനും വഴി (Directions) കാണാനും ലൊക്കേഷൻ സെറ്റ് ചെയ്യാം.
+        </p>
+      </div>
+
+      <div class="flex items-center space-x-2 self-start sm:self-auto">
+        <a href="{% url 'shop-dashboard' %}#shopOrdersSection" class="btn-premium px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-extrabold transition flex items-center space-x-1.5 shadow-sm">
+          <span>📦</span>
+          <span>ഓർഡറുകൾ</span>
+        </a>
+        <a href="{% url 'shop-detail' shop.id %}" class="btn-premium px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center space-x-2">
+          <span>←</span>
+          <span>കട കാണുക</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+    <!-- Interactive Map Column -->
+    <div class="lg:col-span-2 space-y-4">
+      <div class="bg-white p-2.5 rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div id="shopLocationMap"></div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-500 gap-2 px-1">
+        <div class="flex items-center space-x-2">
+          <span>💡</span>
+          <span>മാപ്പിൽ ക്ലിക്ക് ചെയ്തോ അല്ലെങ്കിൽ പിൻ വലിച്ചിട്ടോ (Drag) കടയുടെ കൃത്യമായ സ്ഥാനം മാറ്റാം.</span>
+        </div>
+        <span class="font-medium">OpenStreetMap (Zero API Cost)</span>
+      </div>
+    </div>
+
+    <!-- Location Form & GPS Controls Column -->
+    <div class="space-y-6">
+
+      <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-5">
+        <h3 class="font-black text-sm text-slate-900 border-b border-slate-100 pb-3">
+          ലൊക്കേഷൻ ക്രമീകരിക്കുക
+        </h3>
+
+        <!-- GPS Detection Button -->
+        <div>
+          <button
+            type="button"
+            id="btnAutoDetect"
+            onclick="detectCurrentLocation()"
+            class="btn-premium w-full py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs shadow-md transition flex items-center justify-center space-x-2"
+          >
+            <span>📍</span>
+            <span>കടയിൽ വെച്ച് GPS കണ്ടെത്തുക</span>
+          </button>
+          <p class="text-[11px] text-slate-400 mt-1.5 text-center">
+            നിങ്ങൾ ഇപ്പോൾ കടയിലാണെങ്കിൽ ഈ ബട്ടൺ അമർത്താം.
+          </p>
+        </div>
+
+        <div id="statusAlert" class="hidden text-xs p-3 rounded-2xl font-bold"></div>
+
+        <form action="{% url 'shop-location-edit' shop.id %}" method="POST" class="space-y-4">
+          {% csrf_token %}
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">അക്ഷാംശം (Latitude)</label>
+            <input
+              type="number"
+              step="any"
+              id="latInput"
+              name="latitude"
+              value="{% if shop.latitude %}{{ shop.latitude }}{% endif %}"
+              placeholder="e.g. 10.8505"
+              required
+              class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50"
+              onchange="syncInputsToMap()"
+            >
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">രേഖാംശം (Longitude)</label>
+            <input
+              type="number"
+              step="any"
+              id="lngInput"
+              name="longitude"
+              value="{% if shop.longitude %}{{ shop.longitude }}{% endif %}"
+              placeholder="e.g. 76.2711"
+              required
+              class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50"
+              onchange="syncInputsToMap()"
+            >
+          </div>
+
+          <div class="pt-2 border-t border-slate-100 space-y-2">
+            <button
+              type="submit"
+              class="btn-premium w-full py-3 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs shadow-md transition"
+            >
+              ലൊക്കേഷൻ സേവ് ചെയ്യുക
+            </button>
+          </div>
+        </form>
+
+        {% if shop.latitude and shop.longitude %}
+        <!-- Remove / Clear Location Option -->
+        <form action="{% url 'shop-location-edit' shop.id %}" method="POST" onsubmit="return confirm('കടയുടെ GPS ലൊക്കേഷൻ മാപ്പിൽ നിന്നും നീക്കം ചെയ്യണോ?');">
+          {% csrf_token %}
+          <input type="hidden" name="clear_location" value="true">
+          <button
+            type="submit"
+            class="w-full py-2.5 rounded-xl border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-bold transition"
+          >
+            ലൊക്കേഷൻ നീക്കം ചെയ്യുക
+          </button>
+        </form>
+        {% endif %}
+
+      </div>
+
+      <!-- Privacy & Separation Notice -->
+      <div class="bg-slate-50 rounded-3xl p-5 border border-slate-200 text-xs text-slate-600 space-y-2">
+        <h4 class="font-black text-slate-800 flex items-center space-x-1.5">
+          <span>🛡️</span>
+          <span>സുരക്ഷിതത്വ ഉറപ്പ്</span>
+        </h4>
+        <p class="text-[11px] leading-relaxed">
+          ഇവിടെ നൽകുന്ന ലൊക്കേഷൻ നിങ്ങളുടെ <strong>ബിസിനസ്സ് സ്ഥാപനത്തിന്റെ</strong> മാത്രമാണ്. നിങ്ങളുടെ വ്യക്തിഗത പ്രൈവറ്റ് ലൊക്കേഷനുമായി ഇതിന് യാതൊരു ബന്ധവുമില്ല.
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+let map = null;
+let marker = null;
+const initialLat = parseFloat("{{ current_lat|default:'10.8505' }}") || 10.8505;
+const initialLng = parseFloat("{{ current_lng|default:'76.2711' }}") || 76.2711;
+const hasSavedLocation = {% if has_location %}true{% else %}false{% endif %};
+
+document.addEventListener('DOMContentLoaded', function() {
+  initMap();
+});
+
+function initMap() {
+  if (typeof L === 'undefined') {
+    console.error("Leaflet library failed to load");
+    return;
+  }
+
+  const zoomLevel = hasSavedLocation ? 16 : 11;
+  map = L.map('shopLocationMap', {
+    zoomControl: true,
+    scrollWheelZoom: true
+  }).setView([initialLat, initialLng], zoomLevel);
+
+  // OpenStreetMap Tile Layer
+  const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    subdomains: ['a', 'b', 'c'],
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
+  });
+
+  // CartoDB Fallback Layer
+  const cartoLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19,
+    subdomains: ['a', 'b', 'c', 'd'],
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>'
+  });
+
+  osmLayer.addTo(map);
+
+  let tileErrorCount = 0;
+  osmLayer.on('tileerror', function() {
+    tileErrorCount++;
+    if (tileErrorCount === 3 && map.hasLayer(osmLayer)) {
+      console.warn("Switching to CartoDB fallback tile layer");
+      map.removeLayer(osmLayer);
+      cartoLayer.addTo(map);
+    }
+  });
+
+  const shopIcon = L.divIcon({
+    className: 'custom-shop-pin',
+    html: `
+      <div style="background-color: #059669; color: white; width: 36px; height: 36px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 3px solid white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);">
+        🏪
+      </div>
+    `,
+    iconSize: [36, 36],
+    iconAnchor: [18, 18]
+  });
+
+  marker = L.marker([initialLat, initialLng], {
+    draggable: true,
+    icon: shopIcon
+  }).addTo(map);
+
+  marker.bindPopup("<div class='p-1 text-center font-bold text-xs'>🏪 {{ shop.name|escapejs }}</div>").openPopup();
+
+  // Invalidate size to guarantee tiles render properly
+  setTimeout(function() {
+    if (map) map.invalidateSize();
+  }, 250);
+
+  setTimeout(function() {
+    if (map) map.invalidateSize();
+  }, 750);
+
+  window.addEventListener('resize', function() {
+    if (map) map.invalidateSize();
+  });
+
+  // Listen to marker drag events
+  marker.on('dragend', function(e) {
+    const pos = marker.getLatLng();
+    setCoordinates(pos.lat, pos.lng);
+  });
+
+  // Listen to map click events
+  map.on('click', function(e) {
+    marker.setLatLng(e.latlng);
+    setCoordinates(e.latlng.lat, e.latlng.lng);
+  });
+}
+
+function setCoordinates(lat, lng) {
+  document.getElementById('latInput').value = parseFloat(lat).toFixed(6);
+  document.getElementById('lngInput').value = parseFloat(lng).toFixed(6);
+}
+
+function syncInputsToMap() {
+  const lat = parseFloat(document.getElementById('latInput').value);
+  const lng = parseFloat(document.getElementById('lngInput').value);
+
+  if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+    marker.setLatLng([lat, lng]);
+    map.setView([lat, lng], 16);
+  }
+}
+
+function detectCurrentLocation() {
+  const btn = document.getElementById('btnAutoDetect');
+  const alertBox = document.getElementById('statusAlert');
+
+  if (!navigator.geolocation) {
+    showStatus("ഈ ബ്രൗസറിൽ GPS ലഭ്യമല്ല. മാപ്പിൽ ക്ലിക്ക് ചെയ്ത് സെലക്ട് ചെയ്യാം.", "warning");
+    return;
+  }
+
+  showStatus("GPS സ്ഥാനം കണ്ടെത്തുന്നു...", "info");
+  btn.disabled = true;
+
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      btn.disabled = false;
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      setCoordinates(lat, lng);
+      marker.setLatLng([lat, lng]);
+      map.setView([lat, lng], 17);
+      showStatus("GPS സ്ഥാനം കൃത്യമായി കണ്ടെത്തി! താഴെയുള്ള സേവ് ബട്ടൺ അമർത്തുക.", "success");
+    },
+    function(err) {
+      btn.disabled = false;
+      showStatus("GPS കണ്ടെത്താനായില്ല. മാപ്പിൽ തൊട്ട് സ്ഥാനം നിശ്ചയിക്കാം.", "warning");
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+}
+
+function showStatus(msg, type) {
+  const alertBox = document.getElementById('statusAlert');
+  alertBox.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', 'bg-amber-50', 'text-amber-800', 'bg-rose-50', 'text-rose-800');
+
+  if (type === 'success') {
+    alertBox.classList.add('bg-emerald-50', 'text-emerald-800');
+  } else if (type === 'warning') {
+    alertBox.classList.add('bg-amber-50', 'text-amber-800');
+  } else {
+    alertBox.classList.add('bg-slate-100', 'text-slate-800');
+  }
+
+  alertBox.innerText = msg;
+}
+</script>
+{% endblock %}

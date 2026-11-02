@@ -1,0 +1,1048 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ml" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}എന്റെ നാട് - നാട്ടിലെ ഡിജിറ്റൽ കൂട്ടായ്മ (Ente Naadu){% endblock %}</title>
+
+  <!-- Preconnect to font servers for ultra-fast loading -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manjari:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS Framework CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              200: '#a7f3d0',
+              300: '#6ee7b7',
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+              950: '#022c22',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Ente Naadu 3D Theme & Performance CSS -->
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}?v=2.3">
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col justify-between selection:bg-emerald-500 selection:text-white">
+
+  <!-- Top Emergency Ticker (Shown only if urgent alerts exist) -->
+  {% if emergency_alerts %}
+  <aside class="bg-rose-700 text-white text-xs py-2 px-4 shadow-inner relative z-50">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-2 font-bold tracking-wide flex-shrink-0">
+        <span class="inline-block animate-ping h-2 w-2 rounded-full bg-white mr-1"></span>
+        <span class="bg-rose-900/80 px-2 py-0.5 rounded text-[11px] uppercase tracking-wider">അടിയന്തിരം</span>
+      </div>
+      <div class="ticker-wrap mx-4 flex-1">
+        <div class="ticker-content font-medium">
+          {% for alert in emergency_alerts %}
+            <span class="inline-block mr-12">🚨 <strong>{{ alert.title }}:</strong> {{ alert.description|truncatewords:15 }}</span>
+          {% endfor %}
+        </div>
+      </div>
+      <a href="/#alerts" class="text-[11px] font-bold underline hover:text-rose-200 flex-shrink-0">വിശദാംശങ്ങൾ &rarr;</a>
+    </div>
+  </aside>
+  {% endif %}
+
+  <!-- Primary Header & Navigation Bar -->
+  <header class="glass-header text-white sticky top-0 z-40 border-b border-emerald-600/40 shadow-sm transition-all duration-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 sm:h-20">
+
+        <!-- Brand Identity -->
+        <a href="{% url 'home' %}" class="flex items-center space-x-3 group">
+          <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-800 flex items-center justify-center shadow-lg shadow-emerald-950/20 group-hover:scale-105 transition-transform duration-200 border border-emerald-300/30">
+            <span class="text-2xl sm:text-3xl filter drop-shadow">🌴</span>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="text-lg sm:text-2xl font-black tracking-tight text-white group-hover:text-emerald-100 transition-colors">എന്റെ നാട്</span>
+              <span class="hidden sm:inline-block px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-emerald-800/80 text-emerald-200 rounded-full border border-emerald-600/50">ഗ്രാമം ലൈവ്</span>
+            </div>
+            <p class="hidden sm:block text-[11px] sm:text-xs text-emerald-100 font-medium tracking-wide">നാട്ടിലെ ഡിജിറ്റൽ കൂട്ടായ്മ • Ente Naadu</p>
+          </div>
+        </a>
+
+        <!-- Desktop Navigation Links (Visible on Laptop/Desktop/Tablet >= 768px) -->
+        <nav class="hidden md:flex items-center space-x-1 lg:space-x-2">
+          <a href="{% url 'home' %}" class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-white hover:bg-emerald-800/70 hover:text-emerald-100 transition {% if request.resolver_match.url_name == 'home' %}nav-link-active{% endif %}">
+            ഹോം
+          </a>
+          <a href="{% url 'shop-list' %}" class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-white hover:bg-emerald-800/70 hover:text-emerald-100 transition flex items-center space-x-1 {% if request.resolver_match.url_name == 'shop-list' or request.resolver_match.url_name == 'shop-detail' %}nav-link-active{% endif %}">
+            <span>🏪</span>
+            <span>കടകൾ</span>
+          </a>
+
+          {% if not user.is_staff and user.role != 'super_admin' and user.role != 'ward_admin' %}
+          <a href="{% url 'cart-view' %}" class="relative px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-white hover:bg-emerald-800/70 hover:text-emerald-100 transition flex items-center space-x-1 {% if request.resolver_match.url_name == 'cart-view' or request.resolver_match.url_name == 'checkout-view' %}nav-link-active{% endif %}" title="ഷോപ്പിംഗ് കാർട്ട്">
+            <span class="text-sm sm:text-base">🛒</span>
+            <span>കാർട്ട്</span>
+            {% if cart_item_count and cart_item_count > 0 %}
+              <span class="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-black leading-none text-slate-950 bg-amber-400 rounded-full shadow-sm animate-pulse">
+                {{ cart_item_count }}
+              </span>
+            {% endif %}
+          </a>
+          {% endif %}
+
+          <!-- Orders (ഓർഡറുകൾ) Link in Top Bar -->
+          {% if user.is_authenticated %}
+            {% if user.role == 'shop_owner' %}
+            <a href="{% url 'shop-dashboard' %}#shopOrdersSection" class="relative px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-white hover:bg-emerald-800/70 hover:text-emerald-100 transition flex items-center space-x-1 {% if request.resolver_match.url_name == 'shop-dashboard' %}nav-link-active{% endif %}" title="കടയിലെ ഓർഡറുകൾ">
+              <span class="text-sm sm:text-base">📦</span>
+              <span>ഓർഡറുകൾ</span>
+            </a>
+            {% elif not user.is_staff and user.role != 'super_admin' and user.role != 'ward_admin' %}
+            <a href="{% url 'user-dashboard' %}" class="relative px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-white hover:bg-emerald-800/70 hover:text-emerald-100 transition flex items-center space-x-1 {% if request.resolver_match.url_name == 'user-dashboard' %}nav-link-active{% endif %}" title="എന്റെ ഓർഡറുകൾ">
+              <span class="text-sm sm:text-base">📦</span>
+              <span>ഓർഡറുകൾ</span>
+            </a>
+            {% endif %}
+          {% else %}
+          <button type="button" onclick="openModal('loginModal')" class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-white hover:bg-emerald-800/70 hover:text-emerald-100 transition flex items-center space-x-1" title="ഓർഡറുകൾ കാണാൻ ലോഗിൻ ചെയ്യുക">
+            <span class="text-sm sm:text-base">📦</span>
+            <span>ഓർഡറുകൾ</span>
+          </button>
+          {% endif %}
+
+          {% if user.is_authenticated and not user.is_staff and user.role != 'super_admin' and user.role != 'ward_admin' and user.role != 'shop_owner' and '/shops/' not in request.path and '/dashboard/shop/' not in request.path %}
+          <a href="{% url 'chat-home' %}" class="relative px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-white hover:bg-emerald-800/70 hover:text-emerald-100 transition flex items-center space-x-1 {% if 'chat' in request.path %}nav-link-active{% endif %}" title="പ്രൈവറ്റ് ചാറ്റ്">
+            <span>💬</span>
+            <span>ചാറ്റ്</span>
+            {% if chat_unread_count and chat_unread_count > 0 %}
+              <span class="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-black leading-none text-white bg-amber-500 rounded-full shadow-sm animate-pulse">
+                {{ chat_unread_count }}
+              </span>
+            {% endif %}
+          </a>
+          {% endif %}
+
+          <!-- Desktop "More" (കൂടുതൽ) Dropdown Menu -->
+          <div id="desktopMoreDropdownContainer" class="relative group">
+            <button
+              id="desktopMoreDropdownBtn"
+              type="button"
+              onclick="toggleDesktopMoreMenu(event)"
+              class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-white hover:bg-emerald-800/70 hover:text-emerald-100 transition flex items-center space-x-1 {% if request.resolver_match.url_name == 'nearby-shops' or request.resolver_match.url_name == 'nearby-friends' or request.resolver_match.url_name == 'friends-list' %}nav-link-active{% endif %}"
+              aria-expanded="false"
+              aria-label="More navigation links"
+            >
+              <span>🧭</span>
+              <span>കൂടുതൽ</span>
+              <span class="relative">
+                {% if pending_friend_requests_count and pending_friend_requests_count > 0 %}
+                <span class="absolute -top-1 -right-2 h-2 w-2 rounded-full bg-rose-500 animate-ping"></span>
+                <span class="absolute -top-1 -right-2 h-2 w-2 rounded-full bg-rose-500"></span>
+                {% endif %}
+              </span>
+              <svg id="desktopMoreChevron" class="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+
+            <!-- Dropdown Flyout Panel -->
+            <div id="desktopMoreDropdownMenu" class="hidden absolute top-full left-0 mt-2 w-64 bg-slate-900/95 backdrop-blur-md rounded-2xl shadow-2xl border border-emerald-500/30 p-2 z-50 animate-dropdown" style="display: none;">
+              <div class="space-y-1">
+                <a href="{% url 'nearby-shops' %}" class="flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-amber-300 hover:bg-emerald-800/60 transition {% if request.resolver_match.url_name == 'nearby-shops' %}bg-emerald-800/80 text-amber-200{% endif %}">
+                  <span>📍</span>
+                  <span>അടുത്തുള്ള കടകൾ (Nearby)</span>
+                </a>
+
+                {% if user.is_authenticated and not user.is_staff and user.role != 'super_admin' and user.role != 'ward_admin' and user.role != 'shop_owner' and '/shops/' not in request.path and '/dashboard/shop/' not in request.path %}
+                <a href="{% url 'nearby-friends' %}" class="flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-amber-300 hover:bg-emerald-800/60 transition {% if request.resolver_match.url_name == 'nearby-friends' %}bg-emerald-800/80 text-amber-200{% endif %}">
+                  <span>🧭</span>
+                  <span>കൂട്ടുകാരുടെ മാപ്പ് (Friends Map)</span>
+                </a>
+                <a href="{% url 'friends-list' %}" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-emerald-800/60 transition {% if request.resolver_match.url_name == 'friends-list' %}bg-emerald-800/80 text-white{% endif %}">
+                  <span class="flex items-center space-x-2">
+                    <span>👥</span>
+                    <span>കൂട്ടുകാർ (Friends)</span>
+                  </span>
+                  {% if pending_friend_requests_count and pending_friend_requests_count > 0 %}
+                    <span class="px-2 py-0.5 text-[10px] font-black bg-rose-500 text-white rounded-full">
+                      {{ pending_friend_requests_count }}
+                    </span>
+                  {% endif %}
+                </a>
+                {% endif %}
+
+                <div class="border-t border-slate-800 my-1"></div>
+
+                <a href="/#directory" class="flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-emerald-800/60 transition">
+                  <span>📞</span>
+                  <span>സേവന ഡയറക്ടറി</span>
+                </a>
+                <a href="/#blood-donors" class="flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-emerald-800/60 transition">
+                  <span class="text-rose-400">🩸</span>
+                  <span>രക്തദാതാക്കൾ</span>
+                </a>
+                <a href="/#alerts" class="flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-emerald-800/60 transition">
+                  <span>📢</span>
+                  <span>പൊതു അറിയിപ്പുകൾ</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </nav>
+
+        <!-- Right Side: User Controls & Role Actions (Visible on Laptop/Desktop/Tablet >= 768px) -->
+        <div class="hidden md:flex items-center space-x-1.5 lg:space-x-2 xl:space-x-3">
+          {% if user.is_authenticated %}
+            <!-- Role-based Dashboards -->
+            {% if user.is_staff or user.role == 'super_admin' %}
+              <a href="{% url 'admin-dashboard' %}" class="btn-premium px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs xl:text-sm bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold shadow-md shadow-amber-950/20 flex items-center space-x-1 border border-amber-300">
+                <span>🛡️</span>
+                <span>അഡ്മിൻ കൺസോൾ</span>
+              </a>
+              <a href="/admin/" target="_blank" class="px-2 py-1.5 rounded-xl text-xs bg-emerald-900/90 hover:bg-black text-emerald-200 border border-emerald-700 transition" title="Django Core Backend">
+                Django Admin
+              </a>
+            {% elif user.role == 'shop_owner' %}
+              <a href="{% url 'shop-dashboard' %}" class="btn-premium px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs xl:text-sm bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold shadow-md shadow-amber-950/20 flex items-center space-x-1 border border-amber-300">
+                <span>🏪</span>
+                <span>ഷോപ്പ് ഡാഷ്ബോർഡ്</span>
+              </a>
+            {% else %}
+              <a href="{% url 'user-dashboard' %}" class="btn-premium px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs xl:text-sm bg-emerald-800 hover:bg-emerald-900 text-emerald-100 font-bold border border-emerald-600 shadow-sm flex items-center space-x-1">
+                <span>👤</span>
+                <span>എന്റെ ഡാഷ്ബോർഡ്</span>
+              </a>
+            {% endif %}
+
+            <!-- User Name Indicator -->
+            <span class="text-xs font-semibold text-emerald-200 hidden xl:inline-block max-w-[110px] truncate" title="{{ user.full_name }}">
+              {{ user.full_name }}
+            </span>
+
+            <!-- Logout Link -->
+            <a href="{% url 'web-logout' %}" class="px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-xl text-xs font-semibold bg-rose-700/80 hover:bg-rose-800 text-white transition flex items-center space-x-1">
+              <span>ലോഗൗട്ട്</span>
+            </a>
+          {% else %}
+            <!-- Guest Controls -->
+            <button onclick="openModal('loginModal')" class="btn-premium px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs xl:text-sm bg-emerald-800/80 hover:bg-emerald-900 text-white font-semibold border border-emerald-600/80 transition">
+              ലോഗിൻ
+            </button>
+            <button onclick="openModal('userRegisterModal')" class="btn-premium btn-shimmer px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs xl:text-sm bg-white text-emerald-800 hover:bg-emerald-50 font-extrabold shadow-md transition">
+              രജിസ്റ്റർ
+            </button>
+            <button onclick="openModal('shopRegisterModal')" class="btn-premium px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs xl:text-sm bg-amber-400 hover:bg-amber-300 text-slate-950 font-black shadow-md transition flex items-center space-x-1">
+              <span>🏪</span>
+              <span>കട രജിസ്ട്രേഷൻ</span>
+            </button>
+          {% endif %}
+        </div>
+
+        <!-- Mobile & Tablet Menu Hamburger Button & Quick Actions (< 768px) -->
+        <div class="flex md:hidden items-center space-x-2">
+          <!-- Mobile Cart Quick Access Icon -->
+          <a href="{% url 'cart-view' %}" class="relative p-2 rounded-xl bg-emerald-800/90 text-white hover:bg-emerald-900 focus:outline-none" aria-label="Shopping Cart">
+            <span class="text-base">🛒</span>
+            {% if cart_item_count and cart_item_count > 0 %}
+              <span class="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-black leading-none text-slate-950 bg-amber-400 rounded-full shadow">
+                {{ cart_item_count }}
+              </span>
+            {% endif %}
+          </a>
+
+          <!-- Mobile Orders Quick Access Icon -->
+          {% if user.is_authenticated %}
+            {% if user.role == 'shop_owner' %}
+              <a href="{% url 'shop-dashboard' %}#shopOrdersSection" class="relative p-2 rounded-xl bg-emerald-800/90 text-white hover:bg-emerald-900 focus:outline-none" title="കടയിലെ ഓർഡറുകൾ" aria-label="Shop Orders">
+                <span class="text-base">📦</span>
+              </a>
+            {% elif not user.is_staff and user.role != 'super_admin' and user.role != 'ward_admin' %}
+              <a href="{% url 'user-dashboard' %}" class="relative p-2 rounded-xl bg-emerald-800/90 text-white hover:bg-emerald-900 focus:outline-none" title="എന്റെ ഓർഡറുകൾ" aria-label="My Orders">
+                <span class="text-base">📦</span>
+              </a>
+            {% endif %}
+          {% endif %}
+
+          {% if user.is_authenticated %}
+            {% if user.is_staff or user.role == 'super_admin' %}
+              <a href="{% url 'admin-dashboard' %}" class="px-2.5 py-1.5 rounded-lg text-xs bg-amber-400 text-slate-950 font-bold">🛡️ അഡ്മിൻ</a>
+            {% elif user.role == 'shop_owner' %}
+              <a href="{% url 'shop-dashboard' %}" class="px-2.5 py-1.5 rounded-lg text-xs bg-amber-400 text-slate-950 font-bold">🏪 ഷോപ്പ്</a>
+            {% else %}
+              <a href="{% url 'user-dashboard' %}" class="px-2.5 py-1.5 rounded-lg text-xs bg-emerald-800 text-emerald-100 font-bold">👤 ഡാഷ്ബോർഡ്</a>
+            {% endif %}
+          {% endif %}
+          <button id="mobileMenuToggle" class="p-2 rounded-xl bg-emerald-800/90 text-white hover:bg-emerald-900 focus:outline-none" aria-label="Open Navigation Menu" aria-expanded="false">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile & Tablet Menu Slide-Over Drawer (< 1024px) -->
+  <div id="mobileMenuDrawer" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-label="Mobile Navigation Menu">
+    <!-- Backdrop overlay -->
+    <div id="mobileMenuBackdrop" class="fixed inset-0 bg-slate-950/75 backdrop-blur-sm transition-opacity"></div>
+
+    <!-- Drawer panel -->
+    <div class="fixed inset-y-0 right-0 max-w-xs sm:max-w-sm w-full bg-slate-900 text-white shadow-2xl p-5 flex flex-col justify-between z-10 border-l border-emerald-900/50">
+      <div class="flex flex-col h-full overflow-hidden">
+        <!-- Drawer Header -->
+        <div class="flex items-center justify-between pb-4 border-b border-slate-800 flex-shrink-0">
+          <div class="flex items-center space-x-2">
+            <span class="text-2xl">🌴</span>
+            <div>
+              <span class="font-black text-lg text-white">എന്റെ നാട്</span>
+              <span class="block text-[10px] text-emerald-400 font-semibold">നാട്ടിലെ ഡിജിറ്റൽ കൂട്ടായ്മ</span>
+            </div>
+          </div>
+          <button id="closeMobileMenu" class="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition focus:outline-none" aria-label="Close menu">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+
+        <!-- Scrollable Navigation Area -->
+        <nav class="mt-4 space-y-1.5 overflow-y-auto flex-1 pr-1 custom-scrollbar">
+          <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 pt-1">പ്രധാന പേജുകൾ</p>
+          <a href="{% url 'home' %}" class="block px-3.5 py-2.5 rounded-xl font-bold hover:bg-slate-800 text-slate-200 transition {% if request.resolver_match.url_name == 'home' %}bg-emerald-800 text-amber-300 font-black shadow-inner{% endif %}">
+            🏠 ഹോം
+          </a>
+          <a href="{% url 'shop-list' %}" class="block px-3.5 py-2.5 rounded-xl font-bold hover:bg-slate-800 text-slate-200 transition {% if request.resolver_match.url_name == 'shop-list' or request.resolver_match.url_name == 'shop-detail' %}bg-emerald-800 text-amber-300 font-black shadow-inner{% endif %}">
+            🏪 കടകൾ & സേവനങ്ങൾ
+          </a>
+          <a href="{% url 'nearby-shops' %}" class="block px-3.5 py-2.5 rounded-xl font-bold hover:bg-slate-800 text-amber-300 transition {% if request.resolver_match.url_name == 'nearby-shops' %}bg-emerald-800 text-amber-200 font-black shadow-inner{% endif %}">
+            📍 അടുത്തുള്ള കടകൾ (Nearby)
+          </a>
+
+          {% if not user.is_staff and user.role != 'super_admin' and user.role != 'ward_admin' %}
+          <a href="{% url 'cart-view' %}" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold hover:bg-slate-800 text-slate-200 transition {% if request.resolver_match.url_name == 'cart-view' or request.resolver_match.url_name == 'checkout-view' %}bg-emerald-800 text-amber-300 font-black shadow-inner{% endif %}">
+            <span class="flex items-center space-x-2">
+              <span>🛒</span>
+              <span>ഷോപ്പിംഗ് കാർട്ട്</span>
+            </span>
+            {% if cart_item_count and cart_item_count > 0 %}
+              <span class="px-2 py-0.5 text-xs font-black bg-amber-400 text-slate-950 rounded-full shadow">
+                {{ cart_item_count }}
+              </span>
+            {% endif %}
+          </a>
+          {% endif %}
+
+          <!-- Orders (ഓർഡറുകൾ) Link in Mobile Drawer -->
+          {% if user.is_authenticated %}
+            {% if user.role == 'shop_owner' %}
+            <a href="{% url 'shop-dashboard' %}#shopOrdersSection" onclick="closeMobileMenuDrawer()" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold hover:bg-slate-800 text-amber-300 transition {% if request.resolver_match.url_name == 'shop-dashboard' %}bg-emerald-800 text-amber-200 font-black shadow-inner{% endif %}">
+              <span class="flex items-center space-x-2">
+                <span>📦</span>
+                <span>കടയിലെ ഓർഡറുകൾ (Shop Orders)</span>
+              </span>
+            </a>
+            {% elif not user.is_staff and user.role != 'super_admin' and user.role != 'ward_admin' %}
+            <a href="{% url 'user-dashboard' %}" onclick="closeMobileMenuDrawer()" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold hover:bg-slate-800 text-slate-200 transition {% if request.resolver_match.url_name == 'user-dashboard' %}bg-emerald-800 text-amber-300 font-black shadow-inner{% endif %}">
+              <span class="flex items-center space-x-2">
+                <span>📦</span>
+                <span>എന്റെ ഓർഡറുകൾ (My Orders)</span>
+              </span>
+            </a>
+            {% endif %}
+          {% else %}
+          <button type="button" onclick="closeMobileMenuDrawer(); openModal('loginModal');" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold hover:bg-slate-800 text-slate-200 transition text-left">
+            <span class="flex items-center space-x-2">
+              <span>📦</span>
+              <span>ഓർഡറുകൾ (Orders)</span>
+            </span>
+          </button>
+          {% endif %}
+
+          {% if user.is_authenticated and not user.is_staff and user.role != 'super_admin' and user.role != 'ward_admin' and user.role != 'shop_owner' and '/shops/' not in request.path and '/dashboard/shop/' not in request.path %}
+          <div class="border-t border-slate-800 my-2 pt-2">
+            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 pb-1">കൂട്ടായ്മ & ചാറ്റ്</p>
+            <a href="{% url 'nearby-friends' %}" class="block px-3.5 py-2.5 rounded-xl font-bold hover:bg-slate-800 text-amber-300 transition {% if request.resolver_match.url_name == 'nearby-friends' %}bg-emerald-800 text-amber-200 font-black shadow-inner{% endif %}">
+              🧭 കൂട്ടുകാരുടെ മാപ്പ് (Friends Map)
+            </a>
+            <a href="{% url 'friends-list' %}" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold hover:bg-slate-800 text-slate-200 transition {% if request.resolver_match.url_name == 'friends-list' %}bg-emerald-800 text-amber-300 font-black shadow-inner{% endif %}">
+              <span class="flex items-center space-x-2">
+                <span>👥</span>
+                <span>കൂട്ടുകാർ (Friends)</span>
+              </span>
+              {% if pending_friend_requests_count and pending_friend_requests_count > 0 %}
+                <span class="px-2 py-0.5 text-xs font-black bg-rose-500 text-white rounded-full">
+                  {{ pending_friend_requests_count }}
+                </span>
+              {% endif %}
+            </a>
+            <a href="{% url 'chat-home' %}" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold hover:bg-slate-800 text-slate-200 transition {% if 'chat' in request.path %}bg-emerald-800 text-amber-300 font-black shadow-inner{% endif %}">
+              <span class="flex items-center space-x-2">
+                <span>💬</span>
+                <span>പ്രൈവറ്റ് ചാറ്റ് (Chat)</span>
+              </span>
+              {% if chat_unread_count and chat_unread_count > 0 %}
+                <span class="px-2 py-0.5 text-xs font-black bg-amber-400 text-slate-950 rounded-full shadow">
+                  {{ chat_unread_count }}
+                </span>
+              {% endif %}
+            </a>
+          </div>
+          {% endif %}
+
+          <div class="border-t border-slate-800 my-2 pt-2">
+            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 pb-1">നാട്ടിലെ സേവനങ്ങൾ</p>
+            <a href="/#directory" class="block px-3.5 py-2.5 rounded-xl font-bold hover:bg-slate-800 text-slate-200 transition">
+              📞 സേവന ഡയറക്ടറി
+            </a>
+            <a href="/#blood-donors" class="block px-3.5 py-2.5 rounded-xl font-bold hover:bg-slate-800 text-slate-200 transition">
+              🩸 രക്തദാതാക്കൾ
+            </a>
+            <a href="/#alerts" class="block px-3.5 py-2.5 rounded-xl font-bold hover:bg-slate-800 text-slate-200 transition">
+              📢 അറിയിപ്പുകൾ
+            </a>
+          </div>
+        </nav>
+
+        <!-- Bottom User Controls -->
+        <div class="pt-4 border-t border-slate-800 flex-shrink-0 space-y-2">
+          {% if user.is_authenticated %}
+            <div class="p-2.5 bg-slate-800/80 rounded-xl mb-2">
+              <p class="text-[11px] text-slate-400">ലോഗിൻ ചെയ്തിരിക്കുന്നു:</p>
+              <p class="font-bold text-xs text-emerald-400 truncate">{{ user.full_name }}</p>
+              <p class="text-[10px] text-slate-400">{{ user.phone_number }}</p>
+            </div>
+            {% if user.is_staff or user.role == 'super_admin' %}
+              <a href="{% url 'admin-dashboard' %}" class="block w-full py-2 text-center bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold rounded-xl text-xs transition">🛡️ അഡ്മിൻ കൺസോൾ</a>
+              <a href="/admin/" target="_blank" class="block w-full py-1.5 text-center bg-emerald-950 hover:bg-black text-emerald-300 font-semibold rounded-xl text-xs border border-emerald-800 transition">Django Core Admin ↗</a>
+            {% elif user.role == 'shop_owner' %}
+              <a href="{% url 'shop-dashboard' %}" class="block w-full py-2 text-center bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold rounded-xl text-xs transition">🏪 ഷോപ്പ് ഡാഷ്ബോർഡ്</a>
+            {% else %}
+              <a href="{% url 'user-dashboard' %}" class="block w-full py-2 text-center bg-emerald-700 hover:bg-emerald-600 text-white font-bold rounded-xl text-xs transition">👤 എന്റെ ഡാഷ്ബോർഡ്</a>
+            {% endif %}
+            <a href="{% url 'web-logout' %}" class="block w-full py-1.5 text-center bg-rose-900/60 hover:bg-rose-900 text-rose-200 rounded-xl text-xs font-semibold transition">ലോഗൗട്ട് ചെയ്യുക</a>
+          {% else %}
+            <button type="button" onclick="closeMobileMenuDrawer(); openModal('loginModal');" class="block w-full py-2 text-center bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs transition">ലോഗിൻ</button>
+            <button type="button" onclick="closeMobileMenuDrawer(); openModal('userRegisterModal');" class="block w-full py-2 text-center bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition">നാട്ടുകാരൻ രജിസ്ട്രേഷൻ</button>
+            <button type="button" onclick="closeMobileMenuDrawer(); openModal('shopRegisterModal');" class="block w-full py-2 text-center bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold rounded-xl text-xs transition">🏪 കട രജിസ്ട്രേഷൻ</button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Animated Flash Messages Container -->
+  {% if messages %}
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full" aria-label="Notifications">
+    {% for message in messages %}
+    <div class="p-4 mb-3 rounded-2xl text-sm font-semibold flex items-center justify-between shadow-md transition-all duration-300 {% if message.tags == 'error' %}bg-rose-50 text-rose-800 border border-rose-200/80 shadow-rose-900/5{% elif message.tags == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200/80 shadow-emerald-900/5{% else %}bg-blue-50 text-blue-800 border border-blue-200/80 shadow-blue-900/5{% endif %}">
+      <div class="flex items-center space-x-3">
+        <span class="text-lg">
+          {% if message.tags == 'error' %}⚠️{% elif message.tags == 'success' %}✅{% else %}ℹ️{% endif %}
+        </span>
+        <span>{{ message }}</span>
+      </div>
+      <button onclick="this.parentElement.remove()" class="text-xs font-bold px-2 py-1 rounded-lg hover:bg-black/5 transition" aria-label="Dismiss message">✕</button>
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  <!-- Main Content Block -->
+  <main class="flex-grow">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Modern Village Platform Footer -->
+  <footer class="bg-slate-950 text-slate-400 text-xs mt-20 border-t border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+
+        <!-- Column 1: Platform Info -->
+        <div class="space-y-3">
+          <div class="flex items-center space-x-2">
+            <span class="text-2xl">🌴</span>
+            <span class="font-extrabold text-base text-slate-100">എന്റെ നാട്</span>
+          </div>
+          <p class="text-slate-400 leading-relaxed text-xs">
+            നാട്ടിലെ എല്ലാ ജനങ്ങൾക്കും വ്യാപാരികൾക്കുമുള്ള സൗജന്യ കമ്മ്യൂണിറ്റി പ്ലാറ്റ്‌ഫോം. കടകൾ, ഓർഡറുകൾ, അറിയിപ്പുകൾ, സേവനങ്ങൾ എന്നിവ ഒരിടത്ത്.
+          </p>
+          <div class="pt-2 flex items-center space-x-2 text-[11px] text-emerald-400 font-semibold">
+            <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>കമ്മ്യൂണിറ്റി നെറ്റ്വർക്ക് സജീവമാണ്</span>
+          </div>
+        </div>
+
+        <!-- Column 2: Quick Links -->
+        <div class="space-y-2">
+          <h4 class="font-bold text-slate-200 text-sm mb-3">ദ്രുത ലിങ്കുകൾ</h4>
+          <ul class="space-y-1.5">
+            <li><a href="{% url 'home' %}" class="hover:text-emerald-400 transition">🏠 പ്രധാന പേജ്</a></li>
+            <li><a href="{% url 'shop-list' %}" class="hover:text-emerald-400 transition">🏪 എല്ലാ കടകളും</a></li>
+            <li><a href="/#directory" class="hover:text-emerald-400 transition">📞 ഹെൽപ്പ്‌ലൈൻ നമ്പറുകൾ</a></li>
+            <li><a href="/#blood-donors" class="hover:text-emerald-400 transition">🩸 രക്തദാതാക്കളുടെ പട്ടിക</a></li>
+          </ul>
+        </div>
+
+        <!-- Column 3: Emergency Helplines -->
+        <div class="space-y-2">
+          <h4 class="font-bold text-slate-200 text-sm mb-3">അടിയന്തിര നമ്പറുകൾ</h4>
+          <div class="grid grid-cols-2 gap-2 text-[11px]">
+            <a href="tel:112" class="p-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium border border-slate-800 flex items-center justify-between">
+              <span>പോലീസ്</span>
+              <strong class="text-emerald-400">112</strong>
+            </a>
+            <a href="tel:108" class="p-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium border border-slate-800 flex items-center justify-between">
+              <span>ആംബുലൻസ്</span>
+              <strong class="text-emerald-400">108</strong>
+            </a>
+            <a href="tel:101" class="p-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium border border-slate-800 flex items-center justify-between">
+              <span>ഫയർഫോഴ്സ്</span>
+              <strong class="text-emerald-400">101</strong>
+            </a>
+            <a href="tel:1091" class="p-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium border border-slate-800 flex items-center justify-between">
+              <span>വനിതാ ഹെൽപ്പ്</span>
+              <strong class="text-emerald-400">1091</strong>
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Copyright & Local Attribution -->
+      <div class="pt-6 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-3 text-slate-500 text-[11px]">
+        <p>&copy; 2026-2027 എന്റെ നാട് (Ente Naadu). എല്ലാ അവകാശങ്ങളും നിക്ഷിപ്തം.</p>
+        <p>കേരളത്തിലെ ഗ്രാമങ്ങൾക്കും നഗരങ്ങൾക്കുമായി സ്നേഹത്തോടെ നിർമ്മിച്ചത്.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ======================================================================
+       REUSABLE MODALS (Login, Citizen Registration, Shop Registration)
+       ====================================================================== -->
+
+  <!-- Modal 1: Login Modal -->
+  <div id="loginModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative border border-slate-100 card-3d max-h-[90vh] overflow-y-auto custom-scrollbar">
+      <button onclick="closeModal('loginModal')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 text-lg font-bold p-1 rounded-full hover:bg-slate-100 transition" aria-label="Close modal">✕</button>
+
+      <div class="flex items-center space-x-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-800 text-xl font-bold">
+          🔑
+        </div>
+        <div>
+          <h3 class="text-xl font-extrabold text-slate-900">ലോഗിൻ ചെയ്യുക</h3>
+          <p class="text-xs text-slate-500">ഫോൺ നമ്പറും പാസ്‌വേഡും നൽകുക</p>
+        </div>
+      </div>
+
+      <form action="{% url 'web-login' %}" method="POST" class="space-y-4">
+        {% csrf_token %}
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">ഫോൺ നമ്പർ (Phone Number)</label>
+          <input type="tel" name="phone_number" required placeholder="ഉദാ: 9876543210" class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-slate-50/50">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">പാസ്‌വേഡ് (Password)</label>
+          <input type="password" name="password" required placeholder="കുറഞ്ഞത് 6 അക്ഷരങ്ങൾ" class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-slate-50/50">
+        </div>
+        <button type="submit" class="btn-premium btn-shimmer w-full bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold py-3.5 rounded-xl text-sm shadow-lg shadow-emerald-900/10 transition">
+          ലോഗിൻ ചെയ്യാം
+        </button>
+      </form>
+
+      <div class="mt-6 pt-4 border-t border-slate-100 text-center text-xs text-slate-500">
+        അക്കൗണ്ട് ഇല്ലേ?
+        <button onclick="closeModal('loginModal'); openModal('userRegisterModal');" class="text-emerald-700 font-extrabold hover:underline ml-1">ഇവിടെ സൗജന്യമായി ചേരൂ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Citizen Register Modal -->
+  <div id="userRegisterModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto border border-slate-100">
+      <button onclick="closeModal('userRegisterModal')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 text-lg font-bold p-1 rounded-full hover:bg-slate-100 transition" aria-label="Close modal">✕</button>
+
+      <div class="flex items-center space-x-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-800 text-xl font-bold">
+          👤
+        </div>
+        <div>
+          <h3 class="text-xl font-extrabold text-slate-900">നാട്ടുകാരൻ രജിസ്ട്രേഷൻ</h3>
+          <p class="text-xs text-slate-500">ഓർഡറുകൾ നൽകാനും അറിയിപ്പുകൾ അറിയാനും</p>
+        </div>
+      </div>
+
+      <form action="{% url 'web-user-register' %}" method="POST" class="space-y-3.5">
+        {% csrf_token %}
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">പൂർണ്ണ നാമം (Full Name)*</label>
+          <input type="text" name="full_name" required placeholder="നിങ്ങളുടെ പേര്" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">ഫോൺ നമ്പർ (Phone Number)*</label>
+          <input type="tel" name="phone_number" required placeholder="10 അക്ക മൊബൈൽ നമ്പർ" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">പാസ്‌വേഡ് (Password)*</label>
+          <input type="password" name="password" required minlength="6" placeholder="കുറഞ്ഞത് 6 അക്ഷരങ്ങൾ" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">സംസ്ഥാനം (State)*</label>
+            <select name="state" id="userRegState" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+              <option value="Kerala" selected>കേരളം (Kerala)</option>
+              <option value="Tamil Nadu">തമിഴ്നാട് (Tamil Nadu)</option>
+              <option value="Karnataka">കർണാടക (Karnataka)</option>
+              <option value="Other">മറ്റുള്ളവ (Other)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">ജില്ല (District)*</label>
+            <select name="district" id="userRegDistrict" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+              <option value="">-- ജില്ല തിരഞ്ഞെടുക്കുക --</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">പഞ്ചായത്ത് / പ്രദേശം (Area)*</label>
+            <select name="panchayat_name" id="userRegPanchayat" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+              <option value="">-- ആദ്യം ജില്ല തിരഞ്ഞെടുക്കൂ --</option>
+            </select>
+            <input type="hidden" name="area_id" id="userRegAreaId" value="">
+            <input type="text" name="custom_panchayat" id="userRegCustomPanchayat" placeholder="പഞ്ചായത്തിന്റെ പേര് ടൈപ്പ് ചെയ്യുക" class="hidden mt-2 w-full px-3.5 py-2 border border-slate-200 rounded-xl text-xs bg-white">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">വാർഡ് നമ്പർ</label>
+            <input type="number" name="ward_number" min="1" max="150" placeholder="വാർഡ് (1-150)" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">മേൽവിലാസം (Address)</label>
+          <textarea name="address" rows="2" placeholder="വീട്ടുപേര് / ലൊക്കേഷൻ" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50"></textarea>
+        </div>
+        <button type="submit" class="btn-premium btn-shimmer w-full bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold py-3.5 rounded-xl text-sm shadow-lg shadow-emerald-900/10 transition">
+          അക്കൗണ്ട് സൃഷ്ടിക്കുക
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 3: Shop Register Modal -->
+  <div id="shopRegisterModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto border border-slate-100">
+      <button onclick="closeModal('shopRegisterModal')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 text-lg font-bold p-1 rounded-full hover:bg-slate-100 transition" aria-label="Close modal">✕</button>
+
+      <div class="flex items-center space-x-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-800 text-xl font-bold">
+          🏪
+        </div>
+        <div>
+          <h3 class="text-xl font-extrabold text-slate-900">വ്യാപാരി / സ്ഥാപന രജിസ്ട്രേഷൻ</h3>
+          <p class="text-xs text-slate-500">നാട്ടിലെ കടകളും സ്ഥാപനങ്ങളും ഓൺലൈനായി ബന്ധിപ്പിക്കുക</p>
+        </div>
+      </div>
+
+      <form action="{% url 'web-shop-register' %}" method="POST" class="space-y-3.5">
+        {% csrf_token %}
+        {% if not user.is_authenticated %}
+        <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2.5">
+          <p class="text-xs font-extrabold text-slate-800">കടയുടമയുടെ വിവരങ്ങൾ:</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div>
+              <input type="text" name="owner_name" required placeholder="ഉടമയുടെ പേര്*" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-xs bg-white">
+            </div>
+            <div>
+              <input type="tel" name="owner_phone" required placeholder="ഫോൺ നമ്പർ*" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-xs bg-white">
+            </div>
+          </div>
+          <div>
+            <input type="password" name="owner_password" required minlength="6" placeholder="പാസ്‌വേഡ് (കുറഞ്ഞത് 6 അക്ഷരങ്ങൾ)*" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-xs bg-white">
+          </div>
+        </div>
+        {% endif %}
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">സ്ഥാപനത്തിന്റെ പേര് (Shop Name)*</label>
+          <input type="text" name="shop_name" required placeholder="ഉദാ: മലബാർ ഹോട്ടൽ / അക്ഷയ സെന്റർ" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">വിഭാഗം (Category)*</label>
+          <select name="category_id" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+            <option value="">-- വിഭാഗം തിരഞ്ഞെടുക്കുക --</option>
+            {% for c in all_categories %}
+            <option value="{{ c.id }}">{{ c.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">സംസ്ഥാനം (State)*</label>
+            <select name="state" id="shopRegState" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+              <option value="Kerala" selected>കേരളം (Kerala)</option>
+              <option value="Tamil Nadu">തമിഴ്നാട് (Tamil Nadu)</option>
+              <option value="Karnataka">കർണാടക (Karnataka)</option>
+              <option value="Other">മറ്റുള്ളവ (Other)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">ജില്ല (District)*</label>
+            <select name="district" id="shopRegDistrict" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+              <option value="">-- ജില്ല തിരഞ്ഞെടുക്കുക --</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">പഞ്ചായത്ത് / പ്രദേശം (Area)*</label>
+            <select name="panchayat_name" id="shopRegPanchayat" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+              <option value="">-- ആദ്യം ജില്ല തിരഞ്ഞെടുക്കൂ --</option>
+            </select>
+            <input type="hidden" name="area_id" id="shopRegAreaId" value="">
+            <input type="text" name="custom_panchayat" id="shopRegCustomPanchayat" placeholder="പഞ്ചായത്തിന്റെ പേര് ടൈപ്പ് ചെയ്യുക" class="hidden mt-2 w-full px-3.5 py-2 border border-slate-200 rounded-xl text-xs bg-white">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">വാർഡ് നമ്പർ*</label>
+            <input type="number" name="ward_number" required min="1" max="150" placeholder="വാർഡ് (1-150)" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">ബന്ധപ്പെടേണ്ട നമ്പർ</label>
+            <input type="tel" name="contact_phone" placeholder="ഫോൺ നമ്പർ" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">വാട്ട്സാപ്പ് നമ്പർ</label>
+            <input type="tel" name="whatsapp_number" placeholder="WhatsApp നമ്പർ" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">വിലാസം (Shop Address)*</label>
+          <textarea name="address" required rows="2" placeholder="കടയുടെ കൃത്യമായ സ്ഥലം/വിലാസം" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50"></textarea>
+        </div>
+        <!-- Optional GPS Location Picker -->
+        <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-800 flex items-center space-x-1">
+              <span>📍</span>
+              <span>കടയുടെ GPS സ്ഥാനം (ഓപ്ഷണൽ)</span>
+            </span>
+            <button
+              type="button"
+              id="btnShopRegGps"
+              onclick="detectShopRegLocation()"
+              class="px-2.5 py-1 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-[11px] shadow-sm transition"
+            >
+              GPS കണ്ടെത്തുക
+            </button>
+          </div>
+          <p class="text-[10px] text-slate-500">
+            കടയിൽ നിന്നാണ് രജിസ്റ്റർ ചെയ്യുന്നതെങ്കിൽ ഈ ബട്ടൺ അമർത്തി കൃത്യമായ സ്ഥലം ചേർക്കാം.
+          </p>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="number" step="any" id="shopRegLat" name="latitude" placeholder="Latitude" class="px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-mono bg-white">
+            <input type="number" step="any" id="shopRegLng" name="longitude" placeholder="Longitude" class="px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-mono bg-white">
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2 pt-1">
+          <input type="checkbox" id="delivery_available" name="delivery_available" class="rounded text-emerald-600 focus:ring-emerald-500 h-4 w-4">
+          <label for="delivery_available" class="text-xs text-slate-700 font-bold">ഹോം ഡെലിവറി സൗകര്യം ലഭ്യമാണ്</label>
+        </div>
+        <button type="submit" class="btn-premium w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black py-3.5 rounded-xl text-sm shadow-lg shadow-amber-900/10 transition">
+          കട രജിസ്റ്റർ ചെയ്യാം
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       AI VILLAGE ASSISTANT: നാട്ടു സഹായി (FLOATING WIDGET)
+       ====================================================================== -->
+  <div id="aiChatWidget" class="fixed bottom-6 right-6 z-40">
+    <!-- Floating Trigger Button -->
+    <button id="aiToggleBtn" onclick="toggleAiChat()" class="btn-premium flex items-center space-x-2 px-4 py-3 bg-gradient-to-r from-emerald-700 to-teal-800 text-white rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 border border-emerald-400/40">
+      <span class="text-xl">🤖</span>
+      <span class="font-extrabold text-xs sm:text-sm tracking-wide">നാട്ടു സഹായി</span>
+      <span class="flex h-2 w-2 relative">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+      </span>
+    </button>
+
+    <!-- Chat Window Container -->
+    <div id="aiChatWindow" class="hidden absolute bottom-16 right-0 w-[92vw] sm:w-96 bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col z-50 animate-fade-in" style="height: 480px; max-height: 80vh;">
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-emerald-800 to-slate-900 text-white p-4 flex items-center justify-between border-b border-emerald-700/50">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-9 h-9 rounded-full bg-emerald-700 flex items-center justify-center text-lg shadow-inner">
+            🤖
+          </div>
+          <div>
+            <h4 class="font-extrabold text-sm text-white flex items-center space-x-1.5">
+              <span>നാട്ടു സഹായി AI</span>
+              <span class="text-[10px] bg-emerald-500/30 text-emerald-300 px-1.5 py-0.2 rounded font-mono">Live</span>
+            </h4>
+            <p class="text-[11px] text-emerald-200/80">എന്റെ നാട് ഗ്രാമ അസിസ്റ്റന്റ്</p>
+          </div>
+        </div>
+        <button onclick="toggleAiChat()" class="text-slate-300 hover:text-white p-1 rounded-full hover:bg-white/10 transition text-sm">✕</button>
+      </div>
+
+      <!-- Messages Area -->
+      <div id="aiMessagesContainer" class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50 text-xs sm:text-sm">
+        <div class="flex items-start space-x-2">
+          <div class="w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+            🤖
+          </div>
+          <div class="bg-white p-3 rounded-2xl rounded-tl-sm border border-slate-200 text-slate-800 shadow-sm leading-relaxed max-w-[85%]">
+            നമസ്കാരം! ഞാൻ <strong>നാട്ടു സഹായി</strong> ആണ്. 🌴<br>
+            നാട്ടിലെ തുറന്ന കടകൾ, ഡോക്ടർ/ആംബുലൻസ് നമ്പറുകൾ, പുതിയ നോട്ടീസുകൾ എന്നിവ ചോദിച്ചറിയാം.
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Area -->
+      <form id="aiChatForm" onsubmit="handleAiSubmit(event)" class="p-2.5 bg-white border-t border-slate-100 flex items-center space-x-2">
+        <input
+          type="text"
+          id="aiUserInput"
+          placeholder="ചോദ്യം ഇവിടെ ചോദിക്കൂ..."
+          autocomplete="off"
+          class="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800"
+        >
+        <button
+          type="submit"
+          id="aiSendBtn"
+          class="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-bold text-xs shadow-md transition flex items-center justify-center flex-shrink-0"
+        >
+          <span>ചോദിക്കുക</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function toggleAiChat() {
+      const chatWin = document.getElementById('aiChatWindow');
+      if (chatWin.classList.contains('hidden')) {
+        chatWin.classList.remove('hidden');
+        document.getElementById('aiUserInput').focus();
+      } else {
+        chatWin.classList.add('hidden');
+      }
+    }
+
+    async function handleAiSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('aiUserInput');
+      const msg = input.value.trim();
+      if (!msg) return;
+
+      const container = document.getElementById('aiMessagesContainer');
+      const sendBtn = document.getElementById('aiSendBtn');
+
+      // 1. Add User Message
+      const userBubble = document.createElement('div');
+      userBubble.className = 'flex justify-end';
+      userBubble.innerHTML = `
+        <div class="bg-emerald-700 text-white p-3 rounded-2xl rounded-tr-sm shadow-sm max-w-[85%] text-xs sm:text-sm leading-relaxed">
+          ${msg.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+        </div>
+      `;
+      container.appendChild(userBubble);
+      input.value = '';
+      container.scrollTop = container.scrollHeight;
+
+      // 2. Add Loading Indicator
+      const loadingBubble = document.createElement('div');
+      loadingBubble.id = 'aiTypingIndicator';
+      loadingBubble.className = 'flex items-start space-x-2';
+      loadingBubble.innerHTML = `
+        <div class="w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">🤖</div>
+        <div class="bg-white p-3 rounded-2xl rounded-tl-sm border border-slate-200 text-slate-500 text-xs italic shadow-sm">
+          പരിശോധിക്കുന്നു... ⏳
+        </div>
+      `;
+      container.appendChild(loadingBubble);
+      container.scrollTop = container.scrollHeight;
+      sendBtn.disabled = true;
+
+      try {
+        const response = await fetch('/api/v1/ai/chat/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ message: msg })
+        });
+        const data = await response.json();
+
+        // Remove loading
+        const typingElem = document.getElementById('aiTypingIndicator');
+        if (typingElem) typingElem.remove();
+
+        const botReply = data.reply || data.error || "ക്ഷമിക്കണം, മറുപടി നൽകാൻ കഴിഞ്ഞില്ല.";
+
+        // Format newlines into paragraphs or break tags
+        const formattedReply = botReply
+          .replace(/\n\n/g, '<br><br>')
+          .replace(/\n/g, '<br>')
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+        const aiBubble = document.createElement('div');
+        aiBubble.className = 'flex items-start space-x-2';
+        aiBubble.innerHTML = `
+          <div class="w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">🤖</div>
+          <div class="bg-white p-3 rounded-2xl rounded-tl-sm border border-slate-200 text-slate-800 shadow-sm leading-relaxed max-w-[85%] text-xs sm:text-sm">
+            ${formattedReply}
+          </div>
+        `;
+        container.appendChild(aiBubble);
+      } catch (err) {
+        const typingElem = document.getElementById('aiTypingIndicator');
+        if (typingElem) typingElem.remove();
+
+        const errBubble = document.createElement('div');
+        errBubble.className = 'flex items-start space-x-2';
+        errBubble.innerHTML = `
+          <div class="w-7 h-7 rounded-full bg-rose-100 text-rose-800 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">⚠️</div>
+          <div class="bg-white p-3 rounded-2xl border border-rose-200 text-rose-700 shadow-sm text-xs">
+            സെർവറുമായി ബന്ധപ്പെടാൻ സാധിച്ചില്ല. ദയവായി അൽപ്പസമയത്തിനകം വീണ്ടും ശ്രമിക്കുക.
+          </div>
+        `;
+        container.appendChild(errBubble);
+      } finally {
+        sendBtn.disabled = false;
+        container.scrollTop = container.scrollHeight;
+      }
+    }
+
+    function detectShopRegLocation() {
+      const btn = document.getElementById('btnShopRegGps');
+      if (!navigator.geolocation) {
+        alert("ഈ ബ്രൗസറിൽ GPS ലഭ്യമല്ല.");
+        return;
+      }
+      btn.disabled = true;
+      btn.innerText = "തിരയുന്നു...";
+      navigator.geolocation.getCurrentPosition(
+        function(pos) {
+          document.getElementById('shopRegLat').value = pos.coords.latitude.toFixed(6);
+          document.getElementById('shopRegLng').value = pos.coords.longitude.toFixed(6);
+          btn.innerText = "✓ കണ്ടെത്തി";
+          btn.classList.remove('bg-amber-400', 'text-slate-950');
+          btn.classList.add('bg-emerald-600', 'text-white');
+          btn.disabled = false;
+        },
+        function(err) {
+          alert("GPS ലൊക്കേഷൻ കണ്ടെത്താനായില്ല. നേരിട്ട് ടൈപ്പ് ചെയ്യുകയോ പിന്നീട് ഡാഷ്‌ബോർഡിൽ നിന്ന് ചേർക്കുകയോ ചെയ്യാം.");
+          btn.innerText = "GPS കണ്ടെത്തുക";
+          btn.disabled = false;
+        },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+      );
+    }
+
+    // Fail-safe handler for Desktop "More" (കൂടുതൽ) dropdown
+    window.toggleDesktopMoreMenu = function(e) {
+      if (e) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
+      var menu = document.getElementById('desktopMoreDropdownMenu');
+      var btn = document.getElementById('desktopMoreDropdownBtn');
+      var chevron = document.getElementById('desktopMoreChevron');
+      if (!menu) return;
+      var isClosed = menu.classList.contains('hidden') || menu.style.display === 'none';
+      if (isClosed) {
+        menu.classList.remove('hidden');
+        menu.style.display = 'block';
+        if (btn) btn.setAttribute('aria-expanded', 'true');
+        if (chevron) chevron.style.transform = 'rotate(180deg)';
+      } else {
+        menu.classList.add('hidden');
+        menu.style.display = 'none';
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+        if (chevron) chevron.style.transform = 'rotate(0deg)';
+      }
+    };
+
+    // Outside click and mouse hover bindings for seamless UX
+    document.addEventListener('DOMContentLoaded', function() {
+      var container = document.getElementById('desktopMoreDropdownContainer');
+      var menu = document.getElementById('desktopMoreDropdownMenu');
+      var btn = document.getElementById('desktopMoreDropdownBtn');
+      var chevron = document.getElementById('desktopMoreChevron');
+      if (!container || !menu) return;
+
+      var hoverTimer = null;
+      container.addEventListener('mouseenter', function() {
+        clearTimeout(hoverTimer);
+        menu.classList.remove('hidden');
+        menu.style.display = 'block';
+        if (btn) btn.setAttribute('aria-expanded', 'true');
+        if (chevron) chevron.style.transform = 'rotate(180deg)';
+      });
+
+      container.addEventListener('mouseleave', function() {
+        hoverTimer = setTimeout(function() {
+          menu.classList.add('hidden');
+          menu.style.display = 'none';
+          if (btn) btn.setAttribute('aria-expanded', 'false');
+          if (chevron) chevron.style.transform = 'rotate(0deg)';
+        }, 200);
+      });
+
+      document.addEventListener('click', function(e) {
+        if (!container.contains(e.target)) {
+          menu.classList.add('hidden');
+          menu.style.display = 'none';
+          if (btn) btn.setAttribute('aria-expanded', 'false');
+          if (chevron) chevron.style.transform = 'rotate(0deg)';
+        }
+      });
+
+      window.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && menu.style.display !== 'none' && !menu.classList.contains('hidden')) {
+          menu.classList.add('hidden');
+          menu.style.display = 'none';
+          if (btn) btn.setAttribute('aria-expanded', 'false');
+          if (chevron) chevron.style.transform = 'rotate(0deg)';
+        }
+      });
+    });
+  </script>
+
+  <!-- Preloaded Database Areas JSON for Dynamic Cascading -->
+  <script id="dbAreasData" type="application/json">
+  [
+    {% for a in all_areas %}
+    {"id": {{ a.id }}, "name": "{{ a.name|escapejs }}", "district": "{{ a.district|escapejs }}", "state": "{{ a.state|escapejs }}"}{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ]
+  </script>
+
+  <!-- Ente Naadu Interactive Script (v2.4 Cache Busted) -->
+  <script src="{% static 'js/app.js' %}?v=2.4"></script>
+  {% block extra_js %}{% endblock %}
+
+</body>
+</html>

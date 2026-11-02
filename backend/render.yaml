@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: entenaadu-backend
+    env: python
+    region: singapore # Closest free region to India (Kerala)
+    plan: free
+    rootDir: backend
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn entenaadu.wsgi:application --bind 0.0.0.0:$PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: DATABASE_URL
+        sync: false # User pastes their free Neon Postgres URL here in Render Dashboard

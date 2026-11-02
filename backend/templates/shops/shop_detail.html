@@ -1,0 +1,988 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ shop.name }} - എന്റെ നാട് (Ente Naadu){% endblock %}
+
+{% block content %}
+
+{% if can_manage_shop %}
+<!-- Shop Owner Notice Banner -->
+<div class="bg-emerald-950/90 border-b border-emerald-500/40 px-4 py-2.5 text-center text-xs text-emerald-200">
+  <span class="font-bold">🏪 നിങ്ങൾ ഈ കടയുടെ ഉടമസ്ഥനാണ്.</span>
+  <span class="text-emerald-300/80 ml-1">ഉൽപ്പന്നങ്ങൾ ചേർക്കാനും ഓർഡറുകൾ പരിശോധിക്കാനും</span>
+  <a href="{% url 'shop-dashboard' %}" class="underline font-black text-white hover:text-emerald-300 ml-1.5">ഷോപ്പ് ഡാഷ്‌ബോർഡ് തുറക്കുക →</a>
+</div>
+{% endif %}
+
+<!-- Shop Header Section -->
+<section class="bg-gradient-to-b from-emerald-800 via-emerald-900 to-slate-900 text-white py-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+
+      <div class="space-y-3">
+        <!-- Live Open Badge, Verified Tag & Ward -->
+        <div class="flex flex-wrap items-center gap-2">
+          {% with status=business_status %}
+          <span class="text-xs font-black px-3 py-1 rounded-full flex items-center space-x-1.5 shadow-sm
+            {% if status.status_code == 'OPEN' %}bg-emerald-500/30 text-emerald-200 border border-emerald-400/60
+            {% elif status.status_code == 'TEMPORARILY_CLOSED' %}bg-rose-500/30 text-rose-200 border border-rose-400/60
+            {% elif status.status_code == 'CLOSED_TODAY' %}bg-amber-500/30 text-amber-200 border border-amber-400/60
+            {% else %}bg-slate-700 text-slate-300 border border-slate-600{% endif %}">
+            {% if status.status_code == 'OPEN' %}
+            <span class="live-pulse h-2 w-2 rounded-full bg-emerald-400"></span>
+            <span>🟢 {{ status.status_label }} ({{ status.status_label_ml }})</span>
+            {% elif status.status_code == 'TEMPORARILY_CLOSED' %}
+            <span>⚠️ {{ status.status_label_ml }}</span>
+            {% elif status.status_code == 'CLOSED_TODAY' %}
+            <span>🟡 {{ status.status_label }}</span>
+            {% else %}
+            <span>🔴 {{ status.status_label }}</span>
+            {% endif %}
+          </span>
+          {% endwith %}
+
+          <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40">
+            ✓ വെരിഫൈഡ് കട
+          </span>
+
+          <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-800 text-emerald-200 border border-emerald-600">
+            വാർഡ് {{ shop.ward_number }}
+          </span>
+        </div>
+
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white">
+          {{ shop.name }}
+        </h1>
+        <p class="text-xs sm:text-sm text-emerald-200 font-bold">
+          {{ shop.category.name|default:"ജനറൽ സ്റ്റോർ" }} • {{ shop.area.name|default:"കേരളം" }}
+        </p>
+
+        <p class="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+          📍 {{ shop.address }}
+        </p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center gap-3 self-start lg:self-auto">
+        {% if can_manage_shop %}
+        <a href="{% url 'shop-dashboard' %}" class="btn-premium px-5 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs sm:text-sm shadow-xl transition flex items-center space-x-2">
+          <span>⚙️</span>
+          <span>ഷോപ്പ് ഡാഷ്‌ബോർഡ്</span>
+        </a>
+        <a href="{% url 'shop-dashboard' %}#shopOrdersSection" class="btn-premium px-4 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow-xl transition flex items-center space-x-2" title="ഓർഡറുകൾ കാണുക">
+          <span>📦</span>
+          <span>ഓർഡറുകൾ</span>
+        </a>
+        <a href="{% url 'shop-hours-edit' shop.id %}" class="btn-premium px-4 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs sm:text-sm shadow-xl transition flex items-center space-x-2" title="പ്രവർത്തന സമയം മാറ്റുക">
+          <span>⏰</span>
+          <span>പ്രവർത്തന സമയം</span>
+        </a>
+        <a href="{% url 'shop-location-edit' shop.id %}" class="btn-premium px-4 py-3 rounded-2xl bg-white/20 hover:bg-white/30 text-white font-extrabold text-xs sm:text-sm shadow-xl transition flex items-center space-x-2">
+          <span>📍</span>
+          <span>ലൊക്കേഷൻ മാറ്റുക</span>
+        </a>
+        {% endif %}
+        {% if directions_url %}
+        <a href="{{ directions_url }}" target="_blank" rel="noopener" class="btn-premium px-5 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-extrabold text-xs sm:text-sm shadow-xl transition flex items-center space-x-2" title="Google Maps Navigation">
+          <span>🗺️</span>
+          <span>വഴി കാണിക്കുക (Directions)</span>
+        </a>
+        {% endif %}
+        <a href="tel:{{ shop.contact_phone }}" class="btn-premium px-5 py-3 rounded-2xl bg-white text-slate-900 font-extrabold text-xs sm:text-sm shadow-xl hover:bg-slate-100 transition flex items-center space-x-2">
+          <span>📞</span>
+          <span>നേരിട്ട് വിളിക്കുക</span>
+        </a>
+        {% if shop.whatsapp_number %}
+        <a href="https://wa.me/91{{ shop.whatsapp_number }}" target="_blank" class="btn-premium px-5 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-extrabold text-xs sm:text-sm shadow-xl transition flex items-center space-x-2">
+          <span>💬</span>
+          <span>WhatsApp ചാറ്റ്</span>
+        </a>
+        {% endif %}
+      </div>
+
+    </div>
+
+    <!-- Emergency / Temporary Close Notice Banner -->
+    {% if business_status.is_temporarily_closed %}
+    <div class="mt-6 p-4 rounded-2xl bg-rose-500/20 border border-rose-400/50 text-white flex items-start space-x-3">
+      <span class="text-2xl flex-shrink-0">⚠️</span>
+      <div>
+        <h4 class="font-black text-rose-200 text-sm">താൽക്കാലികമായി അടച്ചിരിക്കുന്നു (Temporarily Closed)</h4>
+        <p class="text-xs text-rose-100 mt-0.5">
+          {% if business_status.reason %}
+            കാരണം: <strong>{{ business_status.reason }}</strong>
+          {% else %}
+            ഈ സ്ഥാപനം അടിയന്തിര ആവശ്യങ്ങൾക്കായി ഇപ്പോൾ താൽക്കാലികമായി അടച്ചിട്ടിരിക്കുകയാണ്. ഉടൻ തന്നെ പ്രവർത്തനം പുനരാരംഭിക്കും.
+          {% endif %}
+        </p>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Extra Information Badges (Today's offer, Delivery & Today's Schedule) -->
+    <div class="mt-6 pt-6 border-t border-emerald-700/50 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+
+      <!-- Offer Highlight -->
+      {% if shop.todays_offer %}
+      <div class="p-3.5 rounded-2xl bg-amber-400/10 border border-amber-400/30 text-amber-200 flex items-center space-x-2.5">
+        <span class="text-xl">🔥</span>
+        <div>
+          <strong class="font-bold text-white block">ഇന്നത്തെ പ്രത്യേക ഓഫർ:</strong>
+          <span>{{ shop.todays_offer }}</span>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Delivery info -->
+      <div class="p-3.5 rounded-2xl bg-white/5 border border-white/10 text-slate-200 flex items-center space-x-2.5">
+        <span class="text-xl">🛵</span>
+        <div>
+          <strong class="font-bold text-white block">ഡെലിവറി സൗകര്യം:</strong>
+          <span>{% if shop.delivery_available %}ലഭ്യമാണ് ({{ shop.delivery_radius_km }} കി.മീ പരിധിയിൽ){% else %}കടയിൽ നിന്ന് നേരിട്ട് വാങ്ങുക (Pickup){% endif %}</span>
+        </div>
+      </div>
+
+      <!-- Timing info -->
+      <div class="p-3.5 rounded-2xl bg-white/5 border border-white/10 text-slate-200 flex items-center space-x-2.5">
+        <span class="text-xl">⏰</span>
+        <div>
+          <strong class="font-bold text-white block">ഇന്നത്തെ പ്രവർത്തന സമയം:</strong>
+          <span>{{ business_status.today_schedule }}</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- Products & Services Catalog -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-md">
+        {% if is_service_based %}സേവനങ്ങളുടെ പട്ടിക (Services){% else %}മെനു / കാറ്റലോഗ്{% endif %}
+      </span>
+      <h2 class="text-2xl sm:text-3xl font-black text-slate-900 mt-2">
+        {% if is_service_based %}ലഭ്യമായ സേവനങ്ങൾ{% else %}ഉൽപ്പന്നങ്ങളും സേവനങ്ങളും{% endif %}
+      </h2>
+      <p class="text-xs sm:text-sm text-slate-500 mt-1">
+        {% if is_service_based %}
+          സേവനങ്ങളും സമയദൈർഘ്യവും പരിശോധിച്ച് മുൻകൂട്ടി അപ്പോയിന്റ്മെന്റ് ബുക്ക് ചെയ്യാം
+        {% else %}
+          ആവശ്യമുള്ളവ തിരഞ്ഞെടുത്ത് ഓർഡർ ചെയ്യുകയോ അന്വേഷിക്കുകയോ ചെയ്യാം
+        {% endif %}
+      </p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 perspective-container">
+    {% for product in products %}
+    <div class="card-3d bg-white rounded-3xl p-5 border border-slate-200 shadow-sm hover:shadow-xl transition flex flex-col justify-between">
+      <div class="card-3d-glare"></div>
+
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-extrabold text-slate-400">#{{ forloop.counter }}</span>
+          <div class="flex items-center space-x-1.5">
+            {% if not is_service_based and product.requires_prescription %}
+              <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300" title="ഡോക്ടറുടെ കുറിപ്പടി ആവശ്യമുള്ള മരുന്ന്">
+                ℞ കുറിപ്പടി വേണം
+              </span>
+            {% endif %}
+            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full {% if product.is_available %}bg-emerald-100 text-emerald-800{% else %}bg-rose-100 text-rose-800{% endif %}">
+              {% if product.is_available %}
+                {% if is_service_based %}സേവനം ലഭ്യമാണ്{% else %}സ്റ്റോക്കുണ്ട്{% endif %}
+              {% else %}
+                {% if is_service_based %}ലഭ്യമല്ല{% else %}തീർന്നുപോയി{% endif %}
+              {% endif %}
+            </span>
+          </div>
+        </div>
+
+        <h3 class="font-extrabold text-base text-slate-900 mt-1">{{ product.name }}</h3>
+        {% if product.description %}
+        <p class="text-xs text-slate-500 mt-1 leading-relaxed line-clamp-2">{{ product.description }}</p>
+        {% endif %}
+
+        {% if is_service_based %}
+          <div class="mt-2.5 flex items-center space-x-1 text-xs text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1 rounded-xl w-fit">
+            <span>⏱️ സമയദൈർഘ്യം:</span>
+            <span>{{ product.duration_display }}</span>
+          </div>
+        {% elif product.expiry_info %}
+          <p class="text-[11px] text-slate-500 font-medium mt-1 flex items-center space-x-1">
+            <span>⏳ കാലാവധി:</span>
+            <span class="font-semibold text-slate-700">{{ product.expiry_info }}</span>
+          </p>
+        {% endif %}
+
+        <div class="mt-4 flex items-baseline space-x-2">
+          <span class="text-2xl font-black text-emerald-700">₹{{ product.price }}</span>
+          {% if product.discount_price %}
+          <span class="text-xs text-slate-400 line-through">₹{{ product.discount_price }}</span>
+          {% endif %}
+          <span class="text-xs text-slate-500 font-semibold">{% if is_service_based %}തുടങ്ങുന്നു{% else %}/ {{ product.unit }}{% endif %}</span>
+        </div>
+      </div>
+
+      <div class="mt-5 pt-4 border-t border-slate-100 space-y-2">
+        {% if can_manage_shop %}
+          <!-- Shop Owner View for Own Shop Item: Hide Cart, Buy Now, and Booking Controls -->
+          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-center">
+            <span class="text-[11px] font-bold text-slate-700 block">🏪 നിങ്ങളുടെ സ്വന്തം സ്ഥാപനം</span>
+            <span class="text-[10px] text-slate-500">{% if is_service_based %}സേവന ലഭ്യത താഴെ മാറ്റാം{% else %}സ്റ്റോക്കും ലഭ്യതയും താഴെ മാറ്റാം{% endif %}</span>
+          </div>
+
+          <div class="mt-2.5 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+            <form action="{% url 'product-toggle-stock' product.id %}" method="POST" class="inline">
+              {% csrf_token %}
+              <button type="submit" class="font-bold text-slate-600 hover:text-emerald-700 hover:underline">
+                {% if product.is_available %}{% if is_service_based %}🔴 ലഭ്യത മാറ്റുക{% else %}🔴 സ്റ്റോക്ക് മാറ്റുക{% endif %}{% else %}{% if is_service_based %}🟢 ലഭ്യമാക്കുക{% else %}🟢 സ്റ്റോക്കുണ്ട്{% endif %}{% endif %}
+              </button>
+            </form>
+            <form action="{% url 'product-delete' product.id %}" method="POST" class="inline" onsubmit="return confirm('\'{{ product.name|escapejs }}\' നീക്കം ചെയ്യണമെന്ന് ഉറപ്പാണോ?');">
+              {% csrf_token %}
+              <button type="submit" class="font-bold text-rose-600 hover:text-rose-800 hover:underline flex items-center space-x-1">
+                <span>🗑️</span>
+                <span>ഡിലീറ്റ്</span>
+              </button>
+            </form>
+          </div>
+
+        {% elif user.is_staff or user.role == 'super_admin' or user.role == 'ward_admin' %}
+          <!-- Admin View: Inspection Mode - No Cart / Buy / Booking controls -->
+          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-center">
+            <span class="text-[11px] font-bold text-slate-700 block">🛡️ അഡ്മിൻ പരിശോധന (Admin View)</span>
+            <span class="text-[10px] text-slate-500">
+              സ്റ്റാറ്റസ്: {% if product.is_available %}{% if is_service_based %}സേവനം ലഭ്യമാണ്{% else %}സ്റ്റോക്കുണ്ട് (In Stock){% endif %}{% else %}നിലവിൽ ലഭ്യമല്ല{% endif %}
+            </span>
+          </div>
+
+        {% else %}
+          {% if is_service_based %}
+            <!-- Service-Based Booking Actions (Beauty Parlour / Salon / Service) -->
+            {% if product.is_available and business_status.is_open_now %}
+              {% if user.is_authenticated %}
+              <button onclick="openBookingModal('{{ product.id }}', '{{ product.name|escapejs }}', '{{ product.price }}', '{{ product.duration_display|escapejs }}')" class="btn-premium w-full py-2.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-black text-xs shadow-md flex items-center justify-center space-x-1.5 transition">
+                <span>📅</span>
+                <span>അപ്പോയിന്റ്മെന്റ് ബുക്ക് ചെയ്യാം</span>
+              </button>
+              {% else %}
+              <button onclick="openModal('loginModal')" class="btn-premium w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs shadow transition">
+                ലോഗിൻ ചെയ്തു ബുക്ക് ചെയ്യാം
+              </button>
+              {% endif %}
+            {% else %}
+              <button disabled class="w-full py-2.5 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs cursor-not-allowed">
+                {% if not business_status.is_open_now %}
+                  {% if business_status.is_temporarily_closed %}താൽക്കാലികമായി അടച്ചിരിക്കുന്നു{% else %}ഇപ്പോൾ അടച്ചിരിക്കുന്നു{% endif %}
+                {% else %}
+                  സേവനം ലഭ്യമല്ല
+                {% endif %}
+              </button>
+            {% endif %}
+
+          {% else %}
+            <!-- Product / Order Actions (Groceries, Supermarkets, Restaurants) -->
+            {% if product.is_available and business_status.is_open_now %}
+              {% if user.is_authenticated %}
+              <!-- Add to Multi-Shop Cart Button -->
+              <form action="{% url 'cart-add' product.id %}" method="POST" class="w-full">
+                {% csrf_token %}
+                <input type="hidden" name="quantity" value="1">
+                <button type="submit" class="btn-premium w-full py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs shadow-sm flex items-center justify-center space-x-1.5 transition">
+                  <span>🛒</span>
+                  <span>കാർട്ടിലേക്ക് ചേർക്കുക</span>
+                </button>
+              </form>
+
+              <!-- Direct Instant Order Modal Trigger -->
+              <button onclick="openOrderModal('{{ product.id }}', '{{ product.name|escapejs }}', '{{ product.price }}')" class="w-full py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-200 transition">
+                ⚡ ഇപ്പോൾ തന്നെ വാങ്ങാം
+              </button>
+              {% else %}
+              <button onclick="openModal('loginModal')" class="btn-premium w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs shadow transition">
+                ലോഗിൻ ചെയ്തു വാങ്ങാം
+              </button>
+              {% endif %}
+            {% else %}
+              <button disabled class="w-full py-2.5 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs cursor-not-allowed">
+                {% if not business_status.is_open_now %}
+                  {% if business_status.is_temporarily_closed %}താൽക്കാലികമായി അടച്ചിരിക്കുന്നു{% else %}കട ഇപ്പോൾ അടച്ചിരിക്കുന്നു{% endif %}
+                {% else %}
+                  നിലവിൽ ലഭ്യമല്ല
+                {% endif %}
+              </button>
+            {% endif %}
+          {% endif %}
+        {% endif %}
+      </div>
+
+    </div>
+    {% empty %}
+    <div class="col-span-full py-16 text-center text-slate-400 text-sm">
+      {% if is_service_based %}
+        ഈ സ്ഥാപനത്തിൽ സേവനങ്ങൾ ഒന്നും ലിസ്റ്റ് ചെയ്തിട്ടില്ല. ഫോൺ നമ്പർ വഴി ബന്ധപ്പെടാം.
+      {% else %}
+        ഈ കടയിൽ ഉൽപ്പന്നങ്ങൾ ഒന്നും ചേർത്തിട്ടില്ല. ഫോൺ നമ്പർ വഴി കടക്കാരനെ നേരിട്ട് ബന്ധപ്പെടാം.
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+</section>
+
+<!-- Shop Location & Directions Section -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+  <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
+
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h3 class="text-xl font-black text-slate-900 tracking-tight flex items-center space-x-2">
+          <span>📍</span>
+          <span>കടയുടെ സ്ഥാനം (Location & Navigation)</span>
+        </h3>
+        <p class="text-xs sm:text-sm text-slate-500 mt-1">
+          {{ shop.address }}
+        </p>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        {% if directions_url %}
+        <a href="{{ directions_url }}" target="_blank" rel="noopener" class="btn-premium px-5 py-2.5 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs shadow-md transition flex items-center space-x-2">
+          <span>🗺️</span>
+          <span>വഴി കാണിക്കുക (Google Maps)</span>
+        </a>
+        {% endif %}
+
+        {% if can_manage_shop %}
+        <a href="{% url 'shop-location-edit' shop.id %}" class="px-4 py-2.5 rounded-2xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs transition flex items-center space-x-1.5">
+          <span>✏️</span>
+          <span>GPS മാറ്റുക</span>
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if has_gps_location %}
+    <!-- Leaflet OpenStreetMap Container -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha512-puJW3E/qXDqYd9IfhAI54BJEaWIfloJ7JKsGNbIVDwyLMQAt+IypCwVUDA9Wy53LI47PPX9ZXY++of972RgOZA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <div class="rounded-2xl overflow-hidden border border-slate-200 shadow-inner bg-slate-100">
+      <div id="shopSingleMap" style="height: 360px; width: 100%;"></div>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof L === 'undefined') return;
+
+        const lat = parseFloat("{{ shop.latitude }}");
+        const lng = parseFloat("{{ shop.longitude }}");
+        if (isNaN(lat) || isNaN(lng)) return;
+
+        const singleMap = L.map('shopSingleMap', {
+          zoomControl: true,
+          scrollWheelZoom: false
+        }).setView([lat, lng], 15);
+
+        const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          subdomains: ['a', 'b', 'c'],
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
+        });
+
+        const cartoLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+          maxZoom: 19,
+          subdomains: ['a', 'b', 'c', 'd'],
+          attribution: '&copy; OpenStreetMap &copy; CARTO'
+        });
+
+        osmLayer.addTo(singleMap);
+
+        let tileErrorCount = 0;
+        osmLayer.on('tileerror', function() {
+          tileErrorCount++;
+          if (tileErrorCount === 3 && singleMap.hasLayer(osmLayer)) {
+            singleMap.removeLayer(osmLayer);
+            cartoLayer.addTo(singleMap);
+          }
+        });
+
+        const shopIcon = L.divIcon({
+          className: 'custom-shop-pin',
+          html: '<div style="background-color: #059669; color: white; width: 36px; height: 36px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 3px solid white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);">🏪</div>',
+          iconSize: [36, 36],
+          iconAnchor: [18, 18]
+        });
+
+        const singleMarker = L.marker([lat, lng], { icon: shopIcon }).addTo(singleMap);
+        singleMarker.bindPopup('<div class="p-1 text-center font-bold text-xs">🏪 {{ shop.name|escapejs }}</div>').openPopup();
+
+        setTimeout(function() {
+          if (singleMap) singleMap.invalidateSize();
+        }, 300);
+      });
+    </script>
+    {% else %}
+    <div class="p-6 rounded-2xl bg-slate-50 border border-slate-100 text-center space-y-2">
+      <span class="text-3xl block">📍</span>
+      <p class="font-bold text-xs text-slate-700">ഈ കടയുടെ കൃത്യമായ GPS മാപ്പ് സ്ഥാനം ചേർത്തിട്ടില്ല.</p>
+      {% if can_manage_shop %}
+      <p class="text-xs text-slate-500">നിങ്ങൾക്ക് ഇപ്പോൾ തന്നെ മാപ്പിൽ കടയുടെ ലൊക്കേഷൻ സെറ്റ് ചെയ്യാം.</p>
+      <a href="{% url 'shop-location-edit' shop.id %}" class="inline-block mt-2 px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow transition">
+        + GPS ലൊക്കേഷൻ ചേർക്കുക
+      </a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+
+<!-- Weekly Schedule (7 Days) Section -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+  <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
+
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+      <div>
+        <h3 class="text-xl font-black text-slate-900 tracking-tight flex items-center space-x-2">
+          <span>📅</span>
+          <span>പ്രതിവാര പ്രവർത്തന സമയം (Weekly Schedule)</span>
+        </h3>
+        <p class="text-xs sm:text-sm text-slate-500 mt-1">
+          ആഴ്ചയിലെ 7 ദിവസത്തെയും കട തുറക്കുന്നതും അടയ്ക്കുന്നതുമായ സമയക്രമം
+        </p>
+      </div>
+
+      {% if can_manage_shop %}
+      <a href="{% url 'shop-hours-edit' shop.id %}" class="btn-premium px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold text-xs transition flex items-center space-x-1.5 self-start sm:self-auto">
+        <span>✏️</span>
+        <span>സമയം മാറ്റുക</span>
+      </a>
+      {% endif %}
+    </div>
+
+    <!-- Weekly Table -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
+      {% for day in weekly_schedule %}
+      <div class="p-3.5 rounded-2xl border transition {% if day.is_today %}bg-emerald-50/70 border-emerald-300 ring-2 ring-emerald-400/40{% else %}bg-slate-50/50 border-slate-200{% endif %}">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-xs font-black {% if day.is_today %}text-emerald-900{% else %}text-slate-800{% endif %}">
+            {{ day.name_ml }}
+          </span>
+          {% if day.is_today %}
+          <span class="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-emerald-600 text-white">
+            ഇന്ന്
+          </span>
+          {% endif %}
+        </div>
+
+        <div>
+          {% if day.is_closed %}
+          <span class="text-xs font-extrabold text-rose-600 flex items-center space-x-1">
+            <span>🔴</span>
+            <span>അവധിദിനം</span>
+          </span>
+          {% elif day.opening_time and day.closing_time %}
+          <p class="text-xs font-black text-slate-900">
+            {{ day.schedule_display }}
+          </p>
+          {% else %}
+          <span class="text-[11px] font-medium text-slate-400 italic">
+            സമയം നൽകിയിട്ടില്ല
+          </span>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================================== -->
+<!-- CATEGORY-BASED RATING & REVIEWS SECTION -->
+<!-- ============================================================================== -->
+<section id="shop-reviews-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+  <div class="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-8">
+
+    <!-- Section Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-100 gap-4">
+      <div>
+        <div class="flex items-center space-x-2">
+          <span class="text-2xl">⭐</span>
+          <h3 class="text-xl sm:text-2xl font-black text-slate-900">ഉപഭോക്താക്കളുടെ അഭിപ്രായങ്ങൾ (Customer Reviews)</h3>
+        </div>
+        <p class="text-xs text-slate-500 mt-1">
+          പരിശോധിച്ച ഉപഭോക്താക്കൾ നൽകിയ റേറ്റിംഗുകളും വിഭാഗാനുസൃത വിലയിരുത്തലുകളും
+        </p>
+      </div>
+
+      <div>
+        {% if user_can_review %}
+        <button onclick="openModal('shopReviewModal')" class="btn-premium px-5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs sm:text-sm flex items-center space-x-2 shadow-md transition">
+          <span>⭐</span>
+          <span>റേറ്റിംഗ് നൽകുക (Rate this Shop)</span>
+        </button>
+        {% elif user_review %}
+        <span class="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
+          <span>✓</span>
+          <span>നിങ്ങൾ റേറ്റിംഗ് നൽകി (★ {{ user_review.rating }}/5)</span>
+        </span>
+        {% elif user.is_authenticated and is_shop_owner %}
+        <span class="text-xs text-slate-400 font-medium">നിങ്ങളുടെ കടയാണ് (Own Shop)</span>
+        {% elif user.is_authenticated %}
+        <span class="text-xs text-slate-400 font-medium" title="പൂർത്തിയായ ഓർഡറോ ബുക്കിംഗോ ഉള്ളവർക്ക് മാത്രം">
+          🔒 വാങ്ങിയ ശേഷം റിവ്യൂ നൽകാം
+        </span>
+        {% else %}
+        <a href="{% url 'web-login' %}?next={{ request.path }}" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
+          ലോഗിൻ ചെയ്തു റിവ്യൂ നൽകുക
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Rating Summary Analytics Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-slate-50/80 p-6 rounded-3xl border border-slate-200/80">
+
+      <!-- Overall Score (3 cols) -->
+      <div class="lg:col-span-3 flex flex-col items-center justify-center text-center p-4 bg-white rounded-2xl border border-slate-200/60 shadow-sm">
+        <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">ആകെ റേറ്റിംഗ് (Overall)</span>
+        <div class="text-5xl font-black text-slate-900 mt-2">
+          {{ rating_summary.overall_average_rating }}
+        </div>
+        <div class="flex items-center space-x-1 text-amber-400 text-lg my-2">
+          {% with rating_summary.overall_average_rating as score %}
+            <span>{% if score >= 1 %}★{% else %}☆{% endif %}</span>
+            <span>{% if score >= 2 %}★{% else %}☆{% endif %}</span>
+            <span>{% if score >= 3 %}★{% else %}☆{% endif %}</span>
+            <span>{% if score >= 4 %}★{% else %}☆{% endif %}</span>
+            <span>{% if score >= 4.8 %}★{% else %}☆{% endif %}</span>
+          {% endwith %}
+        </div>
+        <span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-black border border-emerald-200">
+          ✓ {{ rating_summary.verified_reviews_count }} പരിശോധിച്ച റിവ്യൂകൾ
+        </span>
+      </div>
+
+      <!-- Star Distribution (4 cols) -->
+      <div class="lg:col-span-4 p-4 bg-white rounded-2xl border border-slate-200/60 shadow-sm flex flex-col justify-center space-y-2">
+        <span class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1 block">സ്റ്റാർ വിതരണം (Star Distribution)</span>
+        {% for star, data in rating_summary.star_distribution.items %}
+        <div class="flex items-center space-x-2 text-xs">
+          <span class="font-bold text-slate-700 w-6 text-right">{{ star }}★</span>
+          <div class="flex-1 bg-slate-100 rounded-full h-2.5 overflow-hidden">
+            <div class="bg-amber-400 h-2.5 rounded-full transition-all duration-500" style="width: {{ data.percentage }}%;"></div>
+          </div>
+          <span class="text-slate-500 w-12 text-right text-[11px] font-mono">{{ data.count }} ({{ data.percentage }}%)</span>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Category-Wise Rating Criteria (5 cols) -->
+      <div class="lg:col-span-5 p-4 bg-white rounded-2xl border border-slate-200/60 shadow-sm flex flex-col justify-center space-y-2.5">
+        <span class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1 block">
+          വിഭാഗാനുസൃത റേറ്റിംഗ് (Category Breakdown: {{ shop.category.name|default:"General" }})
+        </span>
+
+        {% if rating_summary.criteria_averages %}
+          {% for crit in rating_summary.criteria_averages %}
+          <div>
+            <div class="flex items-center justify-between text-xs mb-1">
+              <span class="font-bold text-slate-800">{{ crit.name_ml }} <span class="text-[11px] text-slate-400 font-normal">({{ crit.name }})</span></span>
+              <span class="font-black text-amber-600 text-xs">{{ crit.average }}★</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+              <div class="bg-emerald-600 h-2 rounded-full" style="width: {% widthratio crit.average 5 100 %}%;"></div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-xs text-slate-400 italic">മാനദണ്ഡങ്ങൾ രേഖപ്പെടുത്തിയിട്ടില്ല.</p>
+        {% endif %}
+      </div>
+
+    </div>
+
+    <!-- Recent Reviews List -->
+    <div>
+      <h4 class="text-base font-black text-slate-900 mb-4 flex items-center space-x-2">
+        <span>💬</span>
+        <span>അടുത്തിടെ വന്ന അഭിപ്രായങ്ങൾ (Recent Reviews)</span>
+      </h4>
+
+      {% if rating_summary.recent_reviews %}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% for rev in rating_summary.recent_reviews %}
+        <div class="p-5 rounded-3xl bg-slate-50 border border-slate-200/80 hover:bg-white hover:shadow-md transition space-y-3">
+          <!-- Top Row: User & Rating -->
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-8 h-8 rounded-full bg-emerald-700 text-white flex items-center justify-center font-black text-xs">
+                {{ rev.user_name|slice:":1"|upper }}
+              </div>
+              <div>
+                <span class="font-bold text-xs text-slate-900 block">{{ rev.user_name }}</span>
+                <span class="text-[10px] text-slate-400">{{ rev.created_at|date:"d M Y" }}</span>
+              </div>
+            </div>
+
+            <div class="text-right">
+              <span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 font-black text-xs">
+                ★ {{ rev.rating }}/5
+              </span>
+              {% if rev.is_verified_buyer %}
+              <span class="block text-[10px] text-emerald-700 font-bold mt-0.5">✓ വാങ്ങിയ ആളുടെ റിവ്യൂ</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- General Written Review -->
+          {% if rev.comment %}
+          <p class="text-xs text-slate-700 leading-relaxed italic bg-white/80 p-3 rounded-2xl border border-slate-200/50">
+            "{{ rev.comment }}"
+          </p>
+          {% endif %}
+
+          <!-- Category Criteria Breakdown Badges -->
+          {% if rev.criterion_ratings %}
+          <div class="pt-2 border-t border-slate-200/60">
+            <span class="text-[10px] uppercase font-bold tracking-wider text-slate-400 block mb-1.5">മാനദണ്ഡ റേറ്റിംഗുകൾ:</span>
+            <div class="flex flex-wrap gap-1.5">
+              {% for cr in rev.criterion_ratings %}
+              <div class="px-2 py-1 rounded-xl bg-white border border-slate-200 text-[11px] flex items-center space-x-1" title="{{ cr.feedback|default:'' }}">
+                <span class="text-slate-600 font-medium">{{ cr.criterion_name_ml|default:cr.criterion_name }}:</span>
+                <span class="text-amber-600 font-black">{{ cr.rating }}★</span>
+                {% if cr.feedback %}
+                <span class="text-slate-400 text-[10px]" title="{{ cr.feedback }}">💬</span>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="p-8 rounded-3xl bg-slate-50 border border-slate-200/60 text-center">
+        <span class="text-3xl">⭐</span>
+        <h5 class="text-sm font-bold text-slate-700 mt-2">ഇതുവരെ റിവ്യൂകൾ ഒന്നും ലഭിച്ചിട്ടില്ല</h5>
+        <p class="text-xs text-slate-400 mt-1">ഈ കടയിൽ നിന്നും സാധനങ്ങൾ വാങ്ങിയ ശേഷം ആദ്യത്തെ റിവ്യൂ നൽകൂ!</p>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================================== -->
+<!-- DYNAMIC CATEGORY-BASED REVIEW MODAL -->
+<!-- ============================================================================== -->
+{% if user_can_review %}
+<div id="shopReviewModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative border border-slate-100 max-h-[92vh] overflow-y-auto">
+    <button onclick="closeModal('shopReviewModal')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 text-lg font-bold p-1 rounded-full hover:bg-slate-100 transition" aria-label="Close modal">✕</button>
+
+    <div class="flex items-center space-x-3 mb-5">
+      <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center text-2xl font-black">
+        ⭐
+      </div>
+      <div>
+        <h3 class="text-xl font-black text-slate-900">റേറ്റിംഗും അഭിപ്രായവും നൽകുക</h3>
+        <p class="text-xs text-slate-500">{{ shop.name }} • {{ shop.category.name|default:"General" }}</p>
+      </div>
+    </div>
+
+    <form action="{% url 'shop-submit-review' shop.id %}" method="POST" class="space-y-5">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.path }}">
+
+      <!-- Eligible Order/Booking Selection if multiple -->
+      {% if eligible_orders or eligible_bookings %}
+      <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+        <label class="block text-xs font-bold text-slate-700">ഏത് ഓർഡർ / ബുക്കിംഗിനാണ് റിവ്യൂ നൽകുന്നത്?*</label>
+        <select name="{% if eligible_orders %}order_id{% else %}booking_id{% endif %}" class="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-300 bg-white">
+          {% for o in eligible_orders %}
+          <option value="{{ o.id }}">🧾 ഓർഡർ #{{ o.id }} ({{ o.created_at|date:"d M Y" }}) — ₹{{ o.total_amount }}</option>
+          {% endfor %}
+          {% for b in eligible_bookings %}
+          <option value="{{ b.id }}">📅 ബുക്കിംഗ് #{{ b.id }} ({{ b.booking_date|date:"d M Y" }} {{ b.time_slot }}) — {{ b.service.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+
+      <!-- 1. Overall Rating (Required, 1-5 stars) -->
+      <div class="p-4 rounded-2xl bg-amber-50/60 border border-amber-200/80">
+        <label class="block text-xs font-black text-amber-950 mb-1.5">ആകെ റേറ്റിംഗ് (Overall Rating)*</label>
+        <p class="text-[11px] text-slate-500 mb-3">കടയുമായുള്ള നിങ്ങളുടെ മൊത്തത്തിലുള്ള അനുഭവം 1 മുതൽ 5 വരെ തിരഞ്ഞെടുക്കുക</p>
+
+        <div class="flex items-center space-x-3">
+          {% for star in "12345" %}
+          <label class="flex items-center space-x-1 cursor-pointer">
+            <input type="radio" name="rating" value="{{ star }}" {% if star == "5" %}checked{% endif %} class="accent-amber-500 w-4 h-4">
+            <span class="text-xs font-black text-slate-800">{{ star }}★</span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- 2. Dynamic Rating Criteria per Business Category -->
+      <div class="space-y-4">
+        <div class="pb-1 border-b border-slate-100">
+          <h4 class="text-xs font-black uppercase tracking-wider text-slate-700">വിഭാഗാനുസൃത വിലയിരുത്തൽ (Category Criteria)</h4>
+          <p class="text-[11px] text-slate-400">ഓരോ മാനദണ്ഡത്തിനും 1-5 സ്റ്റാറും അഭിപ്രായവും നൽകാം</p>
+        </div>
+
+        {% for crit in rating_criteria %}
+        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="font-extrabold text-xs text-slate-900 block">{{ crit.name_ml }}</span>
+              <span class="text-[10px] text-slate-400">{{ crit.name }}</span>
+            </div>
+
+            <!-- Star options for this criterion -->
+            <div class="flex items-center space-x-2">
+              {% for s in "12345" %}
+              <label class="cursor-pointer text-xs font-bold text-slate-700 flex items-center space-x-0.5">
+                <input type="radio" name="criteria_{{ crit.slug }}" value="{{ s }}" {% if s == "5" %}checked{% endif %} class="accent-amber-500">
+                <span>{{ s }}★</span>
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Optional written feedback for this criterion -->
+          <input type="text" name="feedback_{{ crit.slug }}" placeholder="{{ crit.name_ml }}-നെക്കുറിച്ച് കുറിപ്പ് (Optional feedback)" class="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- 3. General Written Review -->
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">പൊതുവായ അഭിപ്രായം (General Review)*</label>
+        <textarea name="comment" rows="3" required placeholder="കടയെക്കുറിച്ചും സേവനത്തെക്കുറിച്ചും നിങ്ങളുടെ അനുഭവങ്ങൾ വിശദമായി എഴുതുക..." class="w-full px-3.5 py-2.5 border border-slate-200 rounded-2xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-slate-50/50"></textarea>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn-premium btn-shimmer w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-black py-3.5 rounded-2xl text-sm shadow-lg shadow-amber-900/10 transition">
+        ⭐ റേറ്റിംഗ് സമർപ്പിക്കുക (Submit Verified Review)
+      </button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+{% if not user.is_staff and user.role != 'super_admin' and user.role != 'ward_admin' %}
+<!-- Quick Order Placement Modal -->
+<div id="orderPlacementModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative border border-slate-100 max-h-[90vh] overflow-y-auto">
+    <button onclick="closeModal('orderPlacementModal')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 text-lg font-bold p-1 rounded-full hover:bg-slate-100 transition" aria-label="Close modal">✕</button>
+
+    <div class="flex items-center space-x-3 mb-4">
+      <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-xl font-bold">
+        🛍️
+      </div>
+      <div>
+        <h3 class="text-xl font-extrabold text-slate-900">ഓർഡർ നൽകുക</h3>
+        <p class="text-xs text-slate-500">{{ shop.name }}</p>
+      </div>
+    </div>
+
+    <form action="{% url 'order-create' shop.id %}" method="POST" class="space-y-4">
+      {% csrf_token %}
+      <input type="hidden" id="modalProductId" name="product_id" value="">
+
+      <!-- Product Summary Box -->
+      <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200/80 flex items-center justify-between">
+        <div>
+          <h4 id="modalProductName" class="font-extrabold text-sm text-slate-900">ഉൽപ്പന്നം</h4>
+          <p class="text-xs text-emerald-800 font-bold mt-0.5">ഒരു യൂണിറ്റിന്: ₹<span id="modalProductPrice">0</span></p>
+        </div>
+        <div class="text-right">
+          <label class="block text-[11px] font-bold text-slate-600 mb-1">എണ്ണം</label>
+          <input type="number" id="modalQuantity" name="quantity" value="1" min="1" max="50" onchange="updateModalTotal()" class="w-16 px-2.5 py-1 text-center font-black border border-emerald-300 rounded-lg text-sm bg-white">
+        </div>
+      </div>
+
+      <!-- Total Price Preview -->
+      <div class="flex items-center justify-between px-2 text-sm font-extrabold">
+        <span class="text-slate-700">ആകെ തുക:</span>
+        <span class="text-emerald-700 text-lg">₹<span id="modalTotalAmount">0</span></span>
+      </div>
+
+      <!-- Delivery Mode -->
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1.5">വാങ്ങുന്ന രീതി (Delivery Option)</label>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <label class="p-3 rounded-xl border border-slate-200 cursor-pointer flex items-center space-x-2 font-bold hover:bg-slate-50">
+            <input type="radio" name="delivery_type" value="pickup" checked class="text-emerald-600">
+            <span>കടയിൽ വന്ന് വാങ്ങൽ</span>
+          </label>
+          {% if shop.delivery_available %}
+          <label class="p-3 rounded-xl border border-slate-200 cursor-pointer flex items-center space-x-2 font-bold hover:bg-slate-50">
+            <input type="radio" name="delivery_type" value="delivery" class="text-emerald-600">
+            <span>ഹോം ഡെലിവറി</span>
+          </label>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Contact Phone -->
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">ബന്ധപ്പെടേണ്ട ഫോൺ നമ്പർ*</label>
+        <input type="tel" name="customer_phone" value="{{ user.phone_number }}" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+      </div>
+
+      <!-- Delivery Address (Optional if pickup) -->
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">ഡെലിവറി വിലാസം (ഹോം ഡെലിവറി എങ്കിൽ)</label>
+        <textarea name="delivery_address" rows="2" placeholder="സ്ഥലം / വീട്ടുപേര്" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">{{ user.address }}</textarea>
+      </div>
+
+      <!-- Special Notes -->
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">പ്രത്യേക നിർദ്ദേശങ്ങൾ (Notes)</label>
+        <input type="text" name="notes" placeholder="ഉദാ: ചൂടോടെ നൽകുക / എരിവ് കുറക്കുക" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+      </div>
+
+      <button type="submit" class="btn-premium btn-shimmer w-full bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold py-3.5 rounded-xl text-sm shadow-lg shadow-emerald-900/10 transition">
+        ഓർഡർ സ്ഥിരീകരിക്കാം
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Appointment Booking Modal (For Beauty Parlours, Salons & Services) -->
+<div id="bookingPlacementModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative border border-slate-100 max-h-[90vh] overflow-y-auto animate-scaleIn">
+    <button onclick="closeModal('bookingPlacementModal')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 text-lg font-bold p-1 rounded-full hover:bg-slate-100 transition" aria-label="Close modal">✕</button>
+
+    <div class="flex items-center space-x-3 mb-4">
+      <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center text-xl font-bold">
+        📅
+      </div>
+      <div>
+        <h3 class="text-xl font-extrabold text-slate-900">അപ്പോയിന്റ്മെന്റ് ബുക്ക് ചെയ്യാം</h3>
+        <p class="text-xs text-slate-500">{{ shop.name }}</p>
+      </div>
+    </div>
+
+    <form action="{% url 'booking-create' shop.id %}" method="POST" class="space-y-4">
+      {% csrf_token %}
+      <input type="hidden" id="modalBookingServiceId" name="service_id" value="">
+
+      <!-- Service Summary Box -->
+      <div class="p-4 rounded-2xl bg-purple-50 border border-purple-200/80 flex items-center justify-between">
+        <div>
+          <h4 id="modalBookingServiceName" class="font-extrabold text-sm text-slate-900">സേവനം</h4>
+          <p class="text-xs text-purple-800 font-bold mt-0.5">നിരക്ക്: ₹<span id="modalBookingServicePrice">0</span></p>
+        </div>
+        <div class="text-right">
+          <span id="modalBookingServiceDuration" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-white border border-purple-200 text-purple-900">
+            ദൈർഘ്യം
+          </span>
+        </div>
+      </div>
+
+      <!-- Date Selection -->
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">തീയതി തിരഞ്ഞെടുക്കുക (Date)*</label>
+        <input type="date" name="booking_date" value="{{ today }}" min="{{ today }}" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-slate-50/50">
+      </div>
+
+      <!-- Time Slot Selection -->
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">സമയ സ്ലോട്ട് (Time Slot)*</label>
+        <select name="time_slot" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-slate-50/50">
+          <option value="09:00 AM - 10:00 AM">09:00 AM - 10:00 AM</option>
+          <option value="10:00 AM - 11:00 AM" selected>10:00 AM - 11:00 AM</option>
+          <option value="11:00 AM - 12:00 PM">11:00 AM - 12:00 PM</option>
+          <option value="12:00 PM - 01:00 PM">12:00 PM - 01:00 PM</option>
+          <option value="02:00 PM - 03:00 PM">02:00 PM - 03:00 PM</option>
+          <option value="03:00 PM - 04:00 PM">03:00 PM - 04:00 PM</option>
+          <option value="04:00 PM - 05:00 PM">04:00 PM - 05:00 PM</option>
+          <option value="05:00 PM - 06:00 PM">05:00 PM - 06:00 PM</option>
+          <option value="06:00 PM - 07:00 PM">06:00 PM - 07:00 PM</option>
+          <option value="07:00 PM - 08:00 PM">07:00 PM - 08:00 PM</option>
+        </select>
+      </div>
+
+      <!-- Number of people -->
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">ആളുകളുടെ എണ്ണം (Persons)</label>
+        <input type="number" name="number_of_people" value="1" min="1" max="10" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-slate-50/50">
+      </div>
+
+      <!-- Contact Phone -->
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">ബന്ധപ്പെടേണ്ട ഫോൺ നമ്പർ*</label>
+        <input type="tel" name="customer_phone" value="{{ user.phone_number }}" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-slate-50/50">
+      </div>
+
+      <!-- Special Notes -->
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">പ്രത്യേക ആവശ്യങ്ങൾ / കുറിപ്പ്</label>
+        <textarea name="special_notes" rows="2" placeholder="ഉദാ: സ്പെഷ്യൽ ഹെയർ സ്പാ / വിവാഹ മേക്കപ്പ്" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-slate-50/50"></textarea>
+      </div>
+
+      <button type="submit" class="btn-premium btn-shimmer w-full bg-purple-700 hover:bg-purple-800 text-white font-extrabold py-3.5 rounded-xl text-sm shadow-lg shadow-purple-900/10 transition">
+        അപ്പോയിന്റ്മെന്റ് ബുക്ക് ചെയ്യുക
+      </button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  let currentPrice = 0;
+
+  function openOrderModal(productId, productName, productPrice) {
+    const el = document.getElementById('modalProductId');
+    if (!el) return;
+    el.value = productId;
+    const nameEl = document.getElementById('modalProductName');
+    if (nameEl) nameEl.textContent = productName;
+    const priceEl = document.getElementById('modalProductPrice');
+    if (priceEl) priceEl.textContent = productPrice;
+    currentPrice = parseFloat(productPrice) || 0;
+    const qtyEl = document.getElementById('modalQuantity');
+    if (qtyEl) qtyEl.value = 1;
+    updateModalTotal();
+    openModal('orderPlacementModal');
+  }
+
+  function updateModalTotal() {
+    const qtyInput = document.getElementById('modalQuantity');
+    if (!qtyInput) return;
+    const qty = parseInt(qtyInput.value, 10) || 1;
+    const total = currentPrice * qty;
+    const totalEl = document.getElementById('modalTotalAmount');
+    if (totalEl) totalEl.textContent = total.toFixed(2);
+  }
+
+  function openBookingModal(serviceId, serviceName, servicePrice, duration) {
+    const el = document.getElementById('modalBookingServiceId');
+    if (!el) return;
+    el.value = serviceId;
+    const nameEl = document.getElementById('modalBookingServiceName');
+    if (nameEl) nameEl.textContent = serviceName;
+    const priceEl = document.getElementById('modalBookingServicePrice');
+    if (priceEl) priceEl.textContent = servicePrice;
+    const durEl = document.getElementById('modalBookingServiceDuration');
+    if (durEl) durEl.textContent = duration || 'സമയദൈർഘ്യം';
+    openModal('bookingPlacementModal');
+  }
+</script>
+{% endblock %}

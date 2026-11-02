@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}ചെക്ക്ഔട്ട് (Checkout) - എന്റെ നാട്{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+
+  <!-- Header -->
+  <div class="pb-6 mb-8 border-b border-slate-200">
+    <div class="flex items-center space-x-2">
+      <span class="text-3xl">📦</span>
+      <h1 class="text-2xl sm:text-3xl font-black text-slate-900">ഓർഡർ സമർപ്പണം (Checkout)</h1>
+    </div>
+    <p class="text-xs sm:text-sm text-slate-500 mt-1">ഡെലിവറി വിവരങ്ങൾ നൽകി ഓർഡർ സ്ഥിരീകരിക്കുക</p>
+  </div>
+
+  <form action="{% url 'checkout-place-order' %}" method="POST" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    {% csrf_token %}
+
+    <!-- Left 2 Cols: Form details -->
+    <div class="lg:col-span-2 space-y-6">
+
+      <!-- Shop Wise Review Summary -->
+      <div class="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
+        <h3 class="text-base font-black text-slate-900 mb-4 flex items-center space-x-2">
+          <span>🏪</span>
+          <span>ഓർഡർ ചെയ്യപ്പെടുന്ന കടകൾ ({{ grouped_items|length }})</span>
+        </h3>
+
+        <div class="space-y-4">
+          {% for group in grouped_items %}
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-black text-sm text-slate-900">{{ group.shop.name }}</span>
+              <span class="font-black text-emerald-700 text-sm">₹{{ group.subtotal }}</span>
+            </div>
+
+            {% if group.has_prescription %}
+            <div class="mb-2 p-2 rounded-xl bg-amber-100/70 border border-amber-300 text-[11px] text-amber-950 font-bold flex items-center space-x-1.5">
+              <span>℞</span>
+              <span>ഈ കടയിൽ കുറിപ്പടി ആവശ്യമുള്ള മരുന്നുകൾ അടങ്ങിയിരിക്കുന്നു.</span>
+            </div>
+            {% endif %}
+
+            <ul class="text-xs text-slate-600 divide-y divide-slate-100">
+              {% for item in group.items %}
+              <li class="py-1.5 flex justify-between">
+                <span>{{ item.product.name }} × {{ item.quantity }}</span>
+                <span class="font-semibold text-slate-800">₹{{ item.subtotal }}</span>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Delivery Preferences -->
+      <div class="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
+        <h3 class="text-base font-black text-slate-900 flex items-center space-x-2">
+          <span>🛵</span>
+          <span>ഡെലിവറി രീതി തിരഞ്ഞെടുക്കുക</span>
+        </h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
+          <label class="p-4 rounded-2xl border-2 border-emerald-500 bg-emerald-50/40 cursor-pointer flex items-center space-x-3 font-bold text-slate-800 hover:bg-emerald-50 transition">
+            <input type="radio" name="delivery_type" value="pickup" checked class="text-emerald-600 w-4 h-4">
+            <div>
+              <span class="block">കടയിൽ നിന്ന് നേരിട്ട് വാങ്ങുക</span>
+              <span class="text-[11px] text-slate-500 font-normal">Store Pickup (സൗജന്യം)</span>
+            </div>
+          </label>
+
+          <label class="p-4 rounded-2xl border-2 border-slate-200 cursor-pointer flex items-center space-x-3 font-bold text-slate-800 hover:bg-slate-50 transition">
+            <input type="radio" name="delivery_type" value="delivery" class="text-emerald-600 w-4 h-4">
+            <div>
+              <span class="block">വീട്ടിൽ എത്തിക്കുക</span>
+              <span class="text-[11px] text-slate-500 font-normal">Home Delivery</span>
+            </div>
+          </label>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">ഡെലിവറി വിലാസം (വീട്ടുപേര്, ലാൻഡ്മാർക്ക്)</label>
+          <textarea name="delivery_address" rows="3" placeholder="ഹോം ഡെലിവറി ആവശ്യമെങ്കിൽ മാത്രം വിലാസം നൽകുക..." class="w-full px-4 py-3 text-xs sm:text-sm border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">ബന്ധപ്പെടേണ്ട ഫോൺ നമ്പർ</label>
+          <input type="tel" name="customer_phone" value="{{ user.phone_number }}" required class="w-full px-4 py-3 text-xs sm:text-sm border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">കടക്കാർക്കുള്ള പ്രത്യേക നിർദ്ദേശങ്ങൾ (Notes / Instructions)</label>
+          <input type="text" name="notes" placeholder="ഉദാ: സാധനങ്ങൾ രാവിലെ 10 മണിക്ക് എടുക്കാം..." class="w-full px-4 py-3 text-xs sm:text-sm border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Right Col: Summary & Submit -->
+    <div class="lg:col-span-1">
+      <div class="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm sticky top-24 space-y-6">
+
+        <h3 class="text-lg font-black text-slate-900 pb-3 border-b border-slate-100">ആകെ തുക</h3>
+
+        <div class="space-y-3 text-xs sm:text-sm">
+          <div class="flex justify-between text-slate-600">
+            <span>ഉൽപ്പന്നങ്ങൾ:</span>
+            <span class="font-extrabold text-slate-900">{{ cart.total_items }} എണ്ണം</span>
+          </div>
+
+          <div class="flex justify-between text-slate-600">
+            <span>ഓർഡറുകൾ തിരിയുന്നത്:</span>
+            <span class="font-extrabold text-slate-900">{{ grouped_items|length }} കടകളിലേക്ക്</span>
+          </div>
+
+          <div class="pt-4 border-t border-slate-200 flex justify-between items-baseline">
+            <span class="text-base font-black text-slate-900">അടക്കേണ്ട തുക:</span>
+            <span class="text-2xl font-black text-emerald-700">₹{{ cart.total_amount }}</span>
+          </div>
+
+          <p class="text-[11px] text-slate-400">തുക സാധനം ലഭിക്കുമ്പോൾ നേരിട്ടോ UPI വഴിയോ കടക്കാരന് നൽകാവുന്നതാണ് (Cash/UPI on delivery/pickup).</p>
+        </div>
+
+        <button type="submit" class="btn-premium btn-shimmer w-full py-4 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-sm shadow-xl shadow-emerald-950/20 flex items-center justify-center space-x-2 transition">
+          <span>✅ ഓർഡർ സ്ഥിരീകരിക്കാം</span>
+        </button>
+
+        <a href="{% url 'cart-view' %}" class="block text-center text-xs font-bold text-slate-500 hover:text-slate-800 transition">
+          ← കാർട്ടിലേക്ക് മടങ്ങുക
+        </a>
+
+      </div>
+    </div>
+
+  </form>
+
+</div>
+{% endblock %}

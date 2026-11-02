@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+
+{% block title %}ഓർഡർ വിവരങ്ങൾ #{{ order.id }} - എന്റെ നാട്{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+
+  <!-- Breadcrumbs & Status Bar -->
+  <div class="flex items-center justify-between pb-6 mb-8 border-b border-slate-200">
+    <div>
+      <div class="flex items-center space-x-2">
+        <span class="text-3xl">🧾</span>
+        <h1 class="text-2xl sm:text-3xl font-black text-slate-900">ഓർഡർ #{{ order.id }}</h1>
+      </div>
+      <p class="text-xs sm:text-sm text-slate-500 mt-1">തീയതി: {{ order.created_at|date:"d M Y, h:i A" }}</p>
+    </div>
+
+    <div>
+      <span class="px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wider
+        {% if order.status == 'completed' %}bg-emerald-100 text-emerald-800 border border-emerald-300
+        {% elif order.status == 'cancelled' %}bg-rose-100 text-rose-800 border border-rose-300
+        {% elif order.status == 'processing' or order.status == 'confirmed' %}bg-blue-100 text-blue-800 border border-blue-300
+        {% else %}bg-amber-100 text-amber-800 border border-amber-300{% endif %}">
+        {{ order.get_status_display }}
+      </span>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+    <!-- Left 2 Cols: Order Items & Shop Info -->
+    <div class="lg:col-span-2 space-y-6">
+
+      <!-- Shop Details Card -->
+      <div class="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">കടയുടെ വിവരങ്ങൾ</span>
+          <h2 class="text-xl font-black text-slate-900 mt-1.5">{{ order.shop.name }}</h2>
+          <p class="text-xs text-slate-500 mt-0.5">📞 {{ order.shop.contact_phone }}</p>
+          {% if order.shop.address %}
+          <p class="text-xs text-slate-500 mt-0.5">📍 {{ order.shop.address }}</p>
+          {% endif %}
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <a href="tel:{{ order.shop.contact_phone }}" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center space-x-1.5 transition">
+            <span>📞</span>
+            <span>വിളിക്കുക</span>
+          </a>
+          {% if order.shop.whatsapp_number %}
+          <a href="https://wa.me/91{{ order.shop.whatsapp_number }}" target="_blank" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center space-x-1.5 transition">
+            <span>💬</span>
+            <span>WhatsApp</span>
+          </a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Purchased Items Table -->
+      <div class="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
+        <h3 class="text-base font-black text-slate-900 mb-4">ഓർഡർ ചെയ്ത ഉൽപ്പന്നങ്ങൾ</h3>
+
+        <div class="divide-y divide-slate-100">
+          {% for item in order.items.all %}
+          <div class="py-3 flex items-center justify-between text-xs sm:text-sm">
+            <div>
+              <h4 class="font-bold text-slate-900">{{ item.product_name }}</h4>
+              <p class="text-slate-500 text-xs mt-0.5">₹{{ item.unit_price }} × {{ item.quantity }}</p>
+            </div>
+            <div class="text-right">
+              <span class="font-black text-slate-900 text-sm">₹{{ item.subtotal }}</span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div class="pt-4 mt-4 border-t border-slate-200 flex items-center justify-between">
+          <span class="font-black text-base text-slate-900">ആകെ തുക</span>
+          <span class="text-2xl font-black text-emerald-700">₹{{ order.total_amount }}</span>
+        </div>
+      </div>
+
+      <!-- Sibling Orders from same checkout group if present -->
+      {% if sibling_orders %}
+      <div class="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
+        <h3 class="text-base font-black text-slate-900 mb-2 flex items-center space-x-2">
+          <span>🛒</span>
+          <span>ഒപ്പം നൽകിയ മറ്റു കടകളുടെ ഓർഡറുകൾ (Group: {{ order.checkout_group_id }})</span>
+        </h3>
+        <p class="text-xs text-slate-500 mb-4">ഒരേ ചെക്ക്ഔട്ടിൽ ഉൾപ്പെട്ട മറ്റു കടകളിലെ ഓർഡറുകൾ താഴെ കാണാം:</p>
+
+        <div class="space-y-3">
+          {% for sib in sibling_orders %}
+          <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+            <div>
+              <a href="{% url 'order-detail' sib.id %}" class="font-extrabold text-xs sm:text-sm text-slate-900 hover:text-emerald-700 hover:underline">
+                #{{ sib.id }} — {{ sib.shop.name }}
+              </a>
+              <p class="text-xs text-slate-500">₹{{ sib.total_amount }} • {{ sib.items.count }} ഉൽപ്പന്നങ്ങൾ</p>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider
+              {% if sib.status == 'completed' %}bg-emerald-100 text-emerald-800
+              {% elif sib.status == 'cancelled' %}bg-rose-100 text-rose-800
+              {% else %}bg-amber-100 text-amber-800{% endif %}">
+              {{ sib.get_status_display }}
+            </span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- Right Col: Delivery & Customer Info -->
+    <div class="lg:col-span-1 space-y-6">
+
+      <div class="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4 text-xs sm:text-sm">
+        <h3 class="text-base font-black text-slate-900 pb-2 border-b border-slate-100">ഡെലിവറി വിവരങ്ങൾ</h3>
+
+        <div>
+          <span class="text-slate-400 block text-xs">രീതി (Method):</span>
+          <span class="font-bold text-slate-900">{{ order.get_delivery_type_display }}</span>
+        </div>
+
+        <div>
+          <span class="text-slate-400 block text-xs">ഉപഭോക്താവ്:</span>
+          <span class="font-bold text-slate-900">{{ order.customer.full_name }}</span>
+          <span class="block text-slate-600 text-xs">{{ order.customer_phone }}</span>
+        </div>
+
+        {% if order.delivery_address %}
+        <div>
+          <span class="text-slate-400 block text-xs">വിലാസം (Address):</span>
+          <p class="font-medium text-slate-800 leading-relaxed">{{ order.delivery_address }}</p>
+        </div>
+        {% endif %}
+
+        {% if order.notes %}
+        <div>
+          <span class="text-slate-400 block text-xs">കുറിപ്പ് (Notes):</span>
+          <p class="font-medium text-slate-800 italic">"{{ order.notes }}"</p>
+        </div>
+        {% endif %}
+
+        {% if order.checkout_group_id %}
+        <div class="pt-2 border-t border-slate-100">
+          <span class="text-slate-400 block text-[11px]">ഗ്രൂപ്പ് ഐഡി:</span>
+          <span class="font-mono text-xs text-slate-600">{{ order.checkout_group_id }}</span>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Action buttons -->
+      <div class="space-y-3">
+        {% if can_rate_order %}
+        <div class="p-5 rounded-3xl bg-amber-50 border border-amber-200 shadow-sm space-y-3">
+          <div class="flex items-center space-x-2">
+            <span class="text-xl">⭐</span>
+            <h4 class="font-black text-slate-900 text-sm">റേറ്റിംഗ് നൽകാം</h4>
+          </div>
+          <p class="text-xs text-slate-600">ഈ ഓർഡർ വിജയകരമായി പൂർത്തിയായി! കടയുടെ സേവനത്തെക്കുറിച്ചുള്ള നിങ്ങളുടെ അഭിപ്രായം രേഖപ്പെടുത്തൂ.</p>
+          <a href="{% url 'shop-detail' order.shop.id %}#shop-reviews-section" class="btn-premium w-full py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs flex items-center justify-center space-x-1.5 shadow-md transition">
+            <span>⭐</span>
+            <span>കടയെ റേറ്റ് ചെയ്യുക (Rate Shop)</span>
+          </a>
+        </div>
+        {% elif order_review %}
+        <div class="p-5 rounded-3xl bg-emerald-50 border border-emerald-200 shadow-sm space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-black text-xs text-emerald-900 flex items-center space-x-1">
+              <span>✓</span>
+              <span>നിങ്ങൾ നൽകിയ റേറ്റിംഗ്</span>
+            </span>
+            <span class="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black text-xs">
+              ★ {{ order_review.rating }}/5
+            </span>
+          </div>
+          {% if order_review.comment %}
+          <p class="text-xs text-slate-700 italic bg-white/70 p-2.5 rounded-xl border border-emerald-100">
+            "{{ order_review.comment }}"
+          </p>
+          {% endif %}
+          {% if order_review.criterion_ratings.exists %}
+          <div class="pt-2 flex flex-wrap gap-1">
+            {% for cr in order_review.criterion_ratings.all %}
+            <span class="text-[10px] px-2 py-0.5 rounded-lg bg-white border border-emerald-200 text-slate-700 font-bold">
+              {{ cr.criterion_name_ml|default:cr.criterion_name }}: {{ cr.rating }}★
+            </span>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        {% if user == order.customer and order.status == 'pending' %}
+        <form action="{% url 'order-cancel' order.id %}" method="POST" onsubmit="return confirm('ഓർഡർ റദ്ദാക്കണമെന്ന് ഉറപ്പാണോ?');">
+          {% csrf_token %}
+          <button type="submit" class="w-full py-3 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 transition">
+            ✕ ഓർഡർ ക്യാൻസൽ ചെയ്യുക
+          </button>
+        </form>
+        {% endif %}
+
+        {% if user == order.shop.owner or user.is_staff %}
+        <div class="bg-amber-50 p-4 rounded-2xl border border-amber-200 space-y-2">
+          <span class="font-black text-xs text-amber-950 block">ഷോപ്പ് ഉടമയ്ക്കുള്ള കൺട്രോൾ:</span>
+          <form action="{% url 'order-update-status' order.id %}" method="POST" class="space-y-2">
+            {% csrf_token %}
+            <select name="status" class="w-full px-3 py-2 text-xs font-bold rounded-xl border border-amber-300 bg-white">
+              <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>തീരുമാനമായിട്ടില്ല (Pending)</option>
+              <option value="confirmed" {% if order.status == 'confirmed' %}selected{% endif %}>സ്ഥിരീകരിച്ചു (Confirmed)</option>
+              <option value="processing" {% if order.status == 'processing' %}selected{% endif %}>തയ്യാറാക്കുന്നു (Processing)</option>
+              <option value="completed" {% if order.status == 'completed' %}selected{% endif %}>പൂർത്തിയായി (Completed)</option>
+              <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>റദ്ദാക്കി (Cancelled)</option>
+            </select>
+            <button type="submit" class="w-full py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs rounded-xl transition">
+              സ്റ്റാറ്റസ് അപ്ഡേറ്റ് ചെയ്യുക
+            </button>
+          </form>
+        </div>
+        {% endif %}
+
+        <a href="{% url 'user-dashboard' %}" class="block text-center py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
+          എന്റെ ഡാഷ്ബോർഡിലേക്ക് മടങ്ങുക
+        </a>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

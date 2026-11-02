@@ -1,0 +1,592 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}എന്റെ ഡാഷ്ബോർഡ് - എന്റെ നാട് (Ente Naadu){% endblock %}
+
+{% block content %}
+
+<!-- User Profile Hero Banner -->
+<section class="bg-gradient-to-b from-emerald-800 via-emerald-900 to-slate-900 text-white py-10 sm:py-14">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+
+      <div class="flex items-center space-x-4">
+        <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-3xl bg-emerald-600/50 border border-emerald-400/40 flex items-center justify-center text-3xl shadow-lg">
+          👤
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-2xl sm:text-3xl font-black text-white">{{ user.full_name }}</h1>
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
+              നാട്ടുകാരൻ
+            </span>
+          </div>
+          <p class="text-xs sm:text-sm text-emerald-200 mt-0.5 font-medium">
+            ഫോൺ: {{ user.phone_number }} {% if user.ward_number %}• വാർഡ് {{ user.ward_number }}{% endif %} {% if user.area %}• {{ user.area.name }}{% endif %}
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-3 self-start sm:self-auto">
+        <a href="{% url 'shop-list' %}" class="btn-premium px-4 py-2.5 rounded-xl bg-white text-slate-900 font-extrabold text-xs shadow-md hover:bg-slate-100 transition">
+          🏪 കടകൾ കാണാം
+        </a>
+      </div>
+
+    </div>
+
+    <!-- Live Metric Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-8 border-t border-emerald-700/50 perspective-container">
+
+      <div class="card-3d p-4 rounded-2xl bg-emerald-950/60 border border-emerald-700/40">
+        <span class="text-xs text-emerald-300 font-bold">സജീവ ഓർഡറുകൾ</span>
+        <div class="text-2xl sm:text-3xl font-black text-amber-300 mt-1" data-count="{{ pending_orders_count }}">
+          {{ pending_orders_count }}
+        </div>
+        <p class="text-[10px] text-emerald-400/80 mt-0.5">നടപടികൾ പുരോഗമിക്കുന്നു</p>
+      </div>
+
+      <div class="card-3d p-4 rounded-2xl bg-emerald-950/60 border border-emerald-700/40">
+        <span class="text-xs text-emerald-300 font-bold">പൂർത്തിയായ ഓർഡറുകൾ</span>
+        <div class="text-2xl sm:text-3xl font-black text-emerald-400 mt-1" data-count="{{ completed_orders_count }}">
+          {{ completed_orders_count }}
+        </div>
+        <p class="text-[10px] text-emerald-400/80 mt-0.5">വിജയകരമായി ലഭിച്ചവ</p>
+      </div>
+
+      <div class="card-3d p-4 rounded-2xl bg-emerald-950/60 border border-emerald-700/40">
+        <span class="text-xs text-emerald-300 font-bold">സേവന ബുക്കിംഗുകൾ</span>
+        <div class="text-2xl sm:text-3xl font-black text-purple-300 mt-1" data-count="{{ bookings|length }}">
+          {{ bookings|length }}
+        </div>
+        <p class="text-[10px] text-emerald-400/80 mt-0.5">പാർലർ / റിപ്പയർ സ്ലോട്ടുകൾ</p>
+      </div>
+
+      <div class="card-3d p-4 rounded-2xl bg-emerald-950/60 border border-emerald-700/40">
+        <span class="text-xs text-emerald-300 font-bold">സമർപ്പിച്ച പരാതികൾ</span>
+        <div class="text-2xl sm:text-3xl font-black text-white mt-1" data-count="{{ complaints|length }}">
+          {{ complaints|length }}
+        </div>
+        <p class="text-[10px] text-emerald-400/80 mt-0.5">അഡ്മിൻ പരിഗണനയിൽ</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Dashboard Main Columns -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+    <!-- Left Column (8 cols): Orders History & Bookings -->
+    <div class="lg:col-span-7 space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 class="text-xl sm:text-2xl font-black text-slate-900">എന്റെ ഓർഡറുകൾ</h2>
+          <p class="text-xs text-slate-500">നിങ്ങൾ കടകളിൽ നൽകിയ ഓർഡറുകളുടെ തത്സമയ സ്റ്റാറ്റസ്</p>
+        </div>
+
+        <!-- Order Tabs -->
+        <div class="inline-flex items-center p-1 rounded-2xl bg-slate-100 border border-slate-200 self-start sm:self-auto text-xs font-bold">
+          <button type="button" onclick="filterUserOrders('active')" id="tab-user-order-active" class="user-order-tab px-3 py-1.5 rounded-xl transition bg-white text-emerald-900 shadow-sm">
+            സജീവം ({{ pending_orders_count }})
+          </button>
+          <button type="button" onclick="filterUserOrders('completed')" id="tab-user-order-completed" class="user-order-tab px-3 py-1.5 rounded-xl transition text-slate-600 hover:text-slate-900">
+            ലഭിച്ചവ ({{ completed_orders_count }})
+          </button>
+          <button type="button" onclick="filterUserOrders('all')" id="tab-user-order-all" class="user-order-tab px-3 py-1.5 rounded-xl transition text-slate-600 hover:text-slate-900">
+            എല്ലാം ({{ orders|length }})
+          </button>
+        </div>
+      </div>
+
+      <div class="space-y-4 max-h-[500px] overflow-y-auto pr-1.5 custom-scrollbar" id="userOrdersContainer">
+        {% for order in orders %}
+        <div class="user-order-card card-3d p-5 rounded-3xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition" data-status="{{ order.status }}">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-3 border-b border-slate-100 gap-2">
+            <div>
+              <div class="flex items-center space-x-2">
+                <a href="{% url 'order-detail' order.id %}" class="font-black text-sm text-slate-900 hover:text-emerald-700 hover:underline">ഓർഡർ #{{ order.id }}</a>
+                <span class="text-xs text-slate-400">• {{ order.created_at|date:"d M, h:i A" }}</span>
+                {% if order.checkout_group_id %}
+                  <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">Group: {{ order.checkout_group_id }}</span>
+                {% endif %}
+              </div>
+              <h3 class="font-extrabold text-base text-emerald-800 mt-0.5">{{ order.shop.name }}</h3>
+            </div>
+
+            <!-- Status Pill -->
+            <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider self-start sm:self-auto
+              {% if order.status == 'pending' %}bg-amber-100 text-amber-900 border border-amber-300
+              {% elif order.status == 'accepted' %}bg-blue-100 text-blue-900 border border-blue-300
+              {% elif order.status == 'preparing' %}bg-purple-100 text-purple-900 border border-purple-300
+              {% elif order.status == 'ready' %}bg-emerald-100 text-emerald-900 border border-emerald-400
+              {% elif order.status == 'completed' %}bg-emerald-700 text-white
+              {% else %}bg-rose-100 text-rose-900 border border-rose-300{% endif %}">
+              {{ order.get_status_display }}
+            </span>
+          </div>
+
+          <!-- Items list -->
+          <div class="space-y-1.5 py-1">
+            {% for item in order.items.all %}
+            <div class="flex items-center justify-between text-xs text-slate-700">
+              <span><strong>{{ item.quantity }}x</strong> {{ item.product_name }}</span>
+              <span class="font-bold text-slate-900">₹{{ item.subtotal }}</span>
+            </div>
+            {% endfor %}
+          </div>
+
+          <!-- Footer of order -->
+          <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div>
+              <span class="text-slate-500">രീതി:</span>
+              <strong class="text-slate-800">{{ order.get_delivery_type_display }}</strong>
+            </div>
+            <div class="flex items-center space-x-3">
+              {% if order.status == 'completed' %}
+                {% if order.id in reviewed_order_ids or order.shop_id in reviewed_shop_ids %}
+                <span class="px-2.5 py-1 rounded-xl text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 inline-flex items-center space-x-1">
+                  <span>✓</span>
+                  <span>റേറ്റിംഗ് നൽകി</span>
+                </span>
+                {% elif order.shop.owner != user %}
+                <a href="{% url 'shop-detail' order.shop.id %}#shop-reviews-section" class="btn-premium px-3 py-1 rounded-xl text-xs font-black bg-amber-400 hover:bg-amber-500 text-slate-950 shadow-sm transition inline-flex items-center space-x-1">
+                  <span>⭐</span>
+                  <span>റേറ്റ് ചെയ്യുക</span>
+                </a>
+                {% endif %}
+              {% endif %}
+              {% if order.status == 'pending' %}
+              <form action="{% url 'order-cancel' order.id %}" method="POST" class="inline" onsubmit="return confirm('ഓർഡർ #{{ order.id }} ക്യാൻസൽ ചെയ്യണമെന്ന് ഉറപ്പാണോ?');">
+                {% csrf_token %}
+                <button type="submit" class="px-2 py-1 rounded-lg text-[11px] font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition" title="ഓർഡർ ക്യാൻസൽ ചെയ്യുക">
+                  ❌ ക്യാൻസൽ ചെയ്യുക
+                </button>
+              </form>
+              {% endif %}
+              <div class="text-right">
+                <span class="text-slate-500">ആകെ തുക:</span>
+                <strong class="text-base font-black text-emerald-700">₹{{ order.total_amount }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="p-8 rounded-3xl bg-white border border-slate-200 text-center">
+          <span class="text-3xl">🛍️</span>
+          <h3 class="font-bold text-slate-800 text-sm mt-2">ഓർഡറുകൾ ഒന്നും ഇതുവരെ നൽകിയിട്ടില്ല</h3>
+          <p class="text-xs text-slate-500 mt-1">നാട്ടിലെ കടകൾ കണ്ട് ഓർഡർ നൽകാൻ താഴെ ക്ലിക്ക് ചെയ്യുക.</p>
+          <a href="{% url 'shop-list' %}" class="mt-4 inline-block btn-premium px-4 py-2 rounded-xl bg-emerald-700 text-white font-bold text-xs">
+            കടകൾ പരിശോധിക്കുക
+          </a>
+        </div>
+        {% endfor %}
+
+        <!-- Empty tab placeholder -->
+        <div id="userOrdersTabEmpty" class="hidden p-8 rounded-3xl bg-white border border-slate-200 text-center text-slate-400 text-xs">
+          ഈ വിഭാഗത്തിൽ ഓർഡറുകൾ ഒന്നും ലഭ്യമല്ല.
+        </div>
+      </div>
+
+      <!-- My Service Bookings Section (Beauty Parlour, Salons, Repair) -->
+      <div class="pt-6 border-t border-slate-200">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900">എന്റെ സർവീസ് ബുക്കിംഗുകൾ</h2>
+            <p class="text-xs text-slate-500">ബ്യൂട്ടി പാർലർ, സലൂൺ, റിപ്പയർ എന്നിവയിലെ നിങ്ങളുടെ അപ്പോയിന്റ്മെന്റുകൾ</p>
+          </div>
+
+          <!-- Bookings Tabs -->
+          <div class="inline-flex items-center p-1 rounded-2xl bg-purple-50 border border-purple-200/80 self-start sm:self-auto text-xs font-bold">
+            <button type="button" onclick="filterUserBookings('upcoming')" id="tab-user-booking-upcoming" class="user-booking-tab px-3 py-1.5 rounded-xl transition bg-white text-purple-900 shadow-sm">
+              വരാനിരിക്കുന്നവ
+            </button>
+            <button type="button" onclick="filterUserBookings('past')" id="tab-user-booking-past" class="user-booking-tab px-3 py-1.5 rounded-xl transition text-slate-600 hover:text-slate-900">
+              കഴിഞ്ഞവ
+            </button>
+            <button type="button" onclick="filterUserBookings('all')" id="tab-user-booking-all" class="user-booking-tab px-3 py-1.5 rounded-xl transition text-slate-600 hover:text-slate-900">
+              എല്ലാം ({{ bookings|length }})
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-4 max-h-[500px] overflow-y-auto pr-1.5 custom-scrollbar" id="userBookingsContainer">
+          {% for booking in bookings %}
+          <div class="user-booking-card card-3d p-5 rounded-3xl bg-white border border-purple-100 shadow-sm hover:shadow-md transition" data-status="{{ booking.status }}">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-3 border-b border-slate-100 gap-2">
+              <div>
+                <div class="flex items-center space-x-2">
+                  <span class="font-black text-sm text-purple-950">ബുക്കിംഗ് #{{ booking.id }}</span>
+                  <span class="text-xs text-slate-400">• {{ booking.created_at|date:"d M, h:i A" }}</span>
+                </div>
+                <h3 class="font-extrabold text-base text-purple-900 mt-0.5">{{ booking.shop.name }}</h3>
+              </div>
+
+              <!-- Status Badge -->
+              <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider self-start sm:self-auto
+                {% if booking.status == 'pending' %}bg-amber-100 text-amber-900 border border-amber-300
+                {% elif booking.status == 'confirmed' %}bg-emerald-100 text-emerald-900 border border-emerald-400
+                {% elif booking.status == 'completed' %}bg-purple-700 text-white
+                {% else %}bg-rose-100 text-rose-900 border border-rose-300{% endif %}">
+                {{ booking.get_status_display }}
+              </span>
+            </div>
+
+            <!-- Booking details -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-700 bg-purple-50/50 p-3.5 rounded-2xl border border-purple-100/80">
+              <div>
+                <span class="text-slate-500 block text-[11px]">സേവനം:</span>
+                <strong class="text-slate-900 font-extrabold text-sm">{{ booking.service.name }}</strong>
+                {% if booking.service.service_duration_minutes %}
+                <span class="inline-block mt-0.5 text-[11px] text-purple-800 font-bold">⏱️ {{ booking.service.duration_display }}</span>
+                {% endif %}
+              </div>
+              <div>
+                <span class="text-slate-500 block text-[11px]">തീയതി & സമയം:</span>
+                <strong class="text-slate-900 font-bold">📅 {{ booking.booking_date|date:"d M Y" }}</strong>
+                <span class="block text-slate-700 font-semibold mt-0.5">⏰ {{ booking.time_slot }}</span>
+              </div>
+              {% if booking.special_notes %}
+              <div class="sm:col-span-2 pt-2 border-t border-purple-100/80 text-[11px]">
+                <span class="text-slate-500">കുറിപ്പ്:</span>
+                <span class="text-slate-700 italic">{{ booking.special_notes }}</span>
+              </div>
+              {% endif %}
+            </div>
+
+            <!-- Footer & Cancel Action -->
+            <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div>
+                <span class="text-slate-500">നിരക്ക്:</span>
+                <strong class="text-base font-black text-purple-900">₹{{ booking.service.price }}</strong>
+              </div>
+
+              {% if booking.status == 'pending' %}
+              <form action="{% url 'booking-cancel' booking.id %}" method="POST" class="inline" onsubmit="return confirm('അപ്പോയിന്റ്മെന്റ് #{{ booking.id }} ക്യാൻസൽ ചെയ്യണമെന്ന് ഉറപ്പാണോ?');">
+                {% csrf_token %}
+                <button type="submit" class="px-3 py-1.5 rounded-xl text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition">
+                  ❌ അപ്പോയിന്റ്മെന്റ് ക്യാൻസൽ ചെയ്യുക
+                </button>
+              </form>
+              {% elif booking.status == 'confirmed' %}
+              <span class="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200" title="സ്ഥാപനം അപ്രൂവ് ചെയ്തതിനാൽ ക്യാൻസൽ ചെയ്യാൻ കടയുമായി നേരിട്ട് ബന്ധപ്പെടുക">
+                ✓ സ്ഥാപനം സ്ഥിരീകരിച്ചു
+              </span>
+              {% elif booking.status == 'completed' %}
+              <div class="flex items-center space-x-2">
+                <span class="text-[11px] font-bold text-purple-800 bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200">
+                  ✓ സേവനം പൂർത്തിയായി
+                </span>
+                {% if booking.id in reviewed_booking_ids or booking.shop_id in reviewed_shop_ids %}
+                <span class="px-2.5 py-1 rounded-xl text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 inline-flex items-center space-x-1">
+                  <span>✓</span>
+                  <span>റേറ്റിംഗ് നൽകി</span>
+                </span>
+                {% elif booking.shop.owner != user %}
+                <a href="{% url 'shop-detail' booking.shop.id %}#shop-reviews-section" class="btn-premium px-3 py-1 rounded-xl text-xs font-black bg-amber-400 hover:bg-amber-500 text-slate-950 shadow-sm transition inline-flex items-center space-x-1">
+                  <span>⭐</span>
+                  <span>റേറ്റ് ചെയ്യുക</span>
+                </a>
+                {% endif %}
+              </div>
+              {% elif booking.status == 'cancelled' %}
+              <span class="text-[11px] font-bold text-rose-700 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">
+                റദ്ദാക്കപ്പെട്ടു
+              </span>
+              {% endif %}
+            </div>
+          </div>
+          {% empty %}
+          <div class="p-6 rounded-3xl bg-white border border-purple-100 text-center">
+            <span class="text-3xl">💇‍♀️</span>
+            <h3 class="font-bold text-slate-800 text-sm mt-2">സർവീസ് ബുക്കിംഗുകൾ ഒന്നും ലഭ്യമല്ല</h3>
+            <p class="text-xs text-slate-500 mt-1">ബ്യൂട്ടി പാർലറുകൾ, റിപ്പയർ സേവനങ്ങൾ എന്നിവ ബുക്ക് ചെയ്യാൻ കടകൾ പരിശോധിക്കുക.</p>
+          </div>
+          {% endfor %}
+
+          <!-- Empty booking tab placeholder -->
+          <div id="userBookingsTabEmpty" class="hidden p-6 rounded-3xl bg-white border border-purple-100 text-center text-slate-400 text-xs">
+            ഈ വിഭാഗത്തിൽ ബുക്കിംഗുകൾ ഒന്നും ലഭ്യമല്ല.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column (5 cols): Complaints & Grievance Cell -->
+    <div class="lg:col-span-5 space-y-6">
+
+      <!-- New Complaint Submission Box -->
+      <div class="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm">
+        <div class="flex items-center space-x-2.5 mb-4">
+          <span class="text-xl">📝</span>
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-base">പരാതി അല്ലെങ്കിൽ നിർദ്ദേശം</h3>
+            <p class="text-xs text-slate-500">അഡ്മിനിലേക്കും വാർഡ് മെമ്പറിലേക്കും നേരിട്ട്</p>
+          </div>
+        </div>
+
+        <form action="{% url 'complaint-create' %}" method="POST" class="space-y-3">
+          {% csrf_token %}
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">വിഷയം (Subject)*</label>
+            <input type="text" name="title" required placeholder="ഉദാ: വഴിവിളക്ക് കത്തുന്നില്ല / മാലിന്യം" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 bg-slate-50/50">
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">വിഭാഗം</label>
+              <select name="category" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50/50">
+                <option value="electricity">വൈദ്യുതി / സ്ട്രീറ്റ് ലൈറ്റ്</option>
+                <option value="roads">റോഡ് / വഴി തടസ്സം</option>
+                <option value="waste">മാലിന്യ പ്രശ്നം</option>
+                <option value="water">കുടിവെള്ളം</option>
+                <option value="health">ശുചിത്വം & ആരോഗ്യം</option>
+                <option value="development">വികസന നിർദ്ദേശം</option>
+                <option value="other">മറ്റുള്ളവ</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">വാർഡ് നമ്പർ</label>
+              <input type="number" name="ward_number" value="{{ user.ward_number|default:1 }}" min="1" max="150" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50/50">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">സ്ഥലം (Landmark)</label>
+            <input type="text" name="location_details" placeholder="കൃത്യമായ സ്ഥലം / ജംഗ്ഷൻ" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50/50">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">വിശദവിവരങ്ങൾ*</label>
+            <textarea name="description" required rows="3" placeholder="പ്രശ്നത്തെക്കുറിച്ച് വിശദമായി എഴുതുക..." class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50/50"></textarea>
+          </div>
+
+          <button type="submit" class="btn-premium btn-shimmer w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs shadow transition">
+            പരാതി സമർപ്പിക്കുക
+          </button>
+        </form>
+      </div>
+
+      <!-- Past Complaints Tracker -->
+      <div class="space-y-3">
+        <h3 class="font-extrabold text-slate-900 text-base">മുൻപ് നൽകിയ പരാതികൾ</h3>
+        {% for comp in complaints %}
+        <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-2">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-slate-800">{{ comp.title }}</span>
+            <div class="flex items-center space-x-1.5">
+              <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase
+                {% if comp.status == 'resolved' %}bg-emerald-100 text-emerald-800
+                {% elif comp.status == 'in_progress' %}bg-blue-100 text-blue-800
+                {% else %}bg-amber-100 text-amber-800{% endif %}">
+                {{ comp.get_status_display }}
+              </span>
+              <!-- Delete Complaint Form -->
+              <form action="{% url 'complaint-delete' comp.id %}" method="POST" class="inline" onsubmit="return confirm('\'{{ comp.title|escapejs }}\' എന്ന പരാതി നീക്കം ചെയ്യണമെന്ന് ഉറപ്പാണോ?');">
+                {% csrf_token %}
+                <button type="submit" class="p-1 rounded text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition" title="പരാതി ഡിലീറ്റ് ചെയ്യുക">
+                  🗑️
+                </button>
+              </form>
+            </div>
+          </div>
+          <p class="text-xs text-slate-500 leading-relaxed">{{ comp.description }}</p>
+
+          <!-- Official Admin Response if any -->
+          {% if comp.admin_remarks %}
+          <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900">
+            <strong class="block font-bold">അഡ്മിൻ മറുപടി:</strong>
+            <span>{{ comp.admin_remarks }}</span>
+          </div>
+          {% endif %}
+        </div>
+        {% empty %}
+        <p class="text-xs text-slate-400 text-center py-4">പരാതികളോ നിർദ്ദേശങ്ങളോ സമർപ്പിച്ചിട്ടില്ല.</p>
+        {% endfor %}
+      </div>
+
+      <!-- Service Directory Listing Application Box -->
+      <div class="p-6 rounded-3xl bg-white border border-blue-200 shadow-sm space-y-4">
+        <div class="flex items-center space-x-2.5">
+          <span class="text-xl">🛠️</span>
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-base">സേവന ഡയറക്ടറിയിൽ ചേരാം</h3>
+            <p class="text-xs text-slate-500">ഇലക്ട്രീഷ്യൻ, പ്ലംബർ, ടാക്സി എന്നിവ ലിസ്റ്റ് ചെയ്യാൻ അപേക്ഷിക്കുക</p>
+          </div>
+        </div>
+
+        <form action="{% url 'directory-submit' %}" method="POST" class="space-y-3">
+          {% csrf_token %}
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">സേവന ദാതാവിന്റെ പേര് / സ്ഥാപനം*</label>
+            <input type="text" name="name" required placeholder="ഉദാ: മനോജ് (ഇലക്ട്രീഷ്യൻ)" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 bg-slate-50/50">
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">വിഭാഗം*</label>
+              <select name="category" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50/50">
+                {% for cat_val, cat_label in directory_categories %}
+                <option value="{{ cat_val }}">{{ cat_label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">വാർഡ് നമ്പർ</label>
+              <input type="number" name="ward_number" value="{{ user.ward_number|default:1 }}" min="1" max="150" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50/50">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">പ്രധാന ഫോൺ നമ്പർ*</label>
+              <input type="tel" name="phone_number" value="{{ user.phone_number }}" required placeholder="10 അക്ക നമ്പർ" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50/50">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">മറ്റൊരു നമ്പർ (ഓപ്ഷണൽ)</label>
+              <input type="tel" name="secondary_phone" placeholder="മറ്റൊരു നമ്പർ" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50/50">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">സ്റ്റാൻഡ് / കൃത്യമായ വിലാസം*</label>
+            <input type="text" name="address_or_stand" required placeholder="ഉദാ: മെയിൻ ഓട്ടോ സ്റ്റാൻഡ് / ജംഗ്ഷൻ" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50/50">
+          </div>
+
+          <p class="text-[11px] text-slate-500 bg-blue-50/70 p-2.5 rounded-xl border border-blue-100 leading-relaxed">
+            ℹ️ നിങ്ങൾ സമർപ്പിക്കുന്ന വിവരങ്ങൾ അഡ്മിൻ പരിശോധിച്ച് അപ്രൂവ് ചെയ്ത ശേഷം നാട്ടിലെ സേവന ഡയറക്ടറിയിൽ ലഭ്യമാകും.
+          </p>
+
+          <button type="submit" class="btn-premium btn-shimmer w-full py-2.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-extrabold text-xs shadow transition">
+            ഡയറക്ടറിയിൽ ചേർക്കാൻ അപേക്ഷിക്കുക
+          </button>
+        </form>
+      </div>
+
+      <!-- My Submitted Services Tracker -->
+      {% if user_directory_entries %}
+      <div class="space-y-3">
+        <h3 class="font-extrabold text-slate-900 text-base">നിങ്ങൾ സമർപ്പിച്ച സേവനങ്ങൾ</h3>
+        {% for entry in user_directory_entries %}
+        <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-400">{{ entry.get_category_display }}</span>
+            <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase {% if entry.is_verified %}bg-emerald-100 text-emerald-800 border border-emerald-300{% else %}bg-amber-100 text-amber-800 border border-amber-300{% endif %}">
+              {% if entry.is_verified %}✓ അപ്രൂവ് ചെയ്തു (ലൈവ്){% else %}⏳ പരിശോധനയിലാണ്{% endif %}
+            </span>
+          </div>
+
+          <h4 class="font-bold text-sm text-slate-800">{{ entry.name }}</h4>
+          <p class="text-xs text-slate-600">📞 {{ entry.phone_number }} • 📍 {{ entry.address_or_stand }} {% if entry.ward_number %}• വാർഡ് {{ entry.ward_number }}{% endif %}</p>
+
+          <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+            <span>സമർപ്പിച്ചത്: {{ entry.created_at|date:"d M Y" }}</span>
+            <form action="{% url 'directory-delete' entry.id %}" method="POST" onsubmit="return confirm('ഈ സേവന ലിസ്റ്റിംഗ് നീക്കം ചെയ്യണമെന്ന് ഉറപ്പാണോ?');">
+              {% csrf_token %}
+              <button type="submit" class="text-rose-500 hover:text-rose-700 font-bold hover:underline">
+                ഒഴിവാക്കുക
+              </button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+    </div>
+
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Filter User Orders Tab
+function filterUserOrders(group) {
+  document.querySelectorAll('.user-order-tab').forEach(tab => {
+    tab.classList.remove('bg-white', 'text-emerald-900', 'shadow-sm');
+    tab.classList.add('text-slate-600');
+  });
+  const activeTab = document.getElementById(`tab-user-order-${group}`);
+  if (activeTab) {
+    activeTab.classList.add('bg-white', 'text-emerald-900', 'shadow-sm');
+    activeTab.classList.remove('text-slate-600');
+  }
+
+  const cards = document.querySelectorAll('.user-order-card');
+  let visibleCount = 0;
+  cards.forEach(card => {
+    const cardStatus = card.getAttribute('data-status');
+    let matches = false;
+    if (group === 'all') {
+      matches = true;
+    } else if (group === 'active' && ['pending', 'accepted', 'preparing', 'ready'].includes(cardStatus)) {
+      matches = true;
+    } else if (group === 'completed' && ['completed', 'cancelled'].includes(cardStatus)) {
+      matches = true;
+    }
+
+    if (matches) {
+      card.style.display = '';
+      visibleCount++;
+    } else {
+      card.style.display = 'none';
+    }
+  });
+
+  const emptyMsg = document.getElementById('userOrdersTabEmpty');
+  if (emptyMsg) {
+    if (visibleCount === 0 && cards.length > 0) {
+      emptyMsg.classList.remove('hidden');
+    } else {
+      emptyMsg.classList.add('hidden');
+    }
+  }
+}
+
+// Filter User Bookings Tab
+function filterUserBookings(group) {
+  document.querySelectorAll('.user-booking-tab').forEach(tab => {
+    tab.classList.remove('bg-white', 'text-purple-900', 'shadow-sm');
+    tab.classList.add('text-slate-600');
+  });
+  const activeTab = document.getElementById(`tab-user-booking-${group}`);
+  if (activeTab) {
+    activeTab.classList.add('bg-white', 'text-purple-900', 'shadow-sm');
+    activeTab.classList.remove('text-slate-600');
+  }
+
+  const cards = document.querySelectorAll('.user-booking-card');
+  let visibleCount = 0;
+  cards.forEach(card => {
+    const cardStatus = card.getAttribute('data-status');
+    let matches = false;
+    if (group === 'all') {
+      matches = true;
+    } else if (group === 'upcoming' && ['pending', 'confirmed'].includes(cardStatus)) {
+      matches = true;
+    } else if (group === 'past' && ['completed', 'cancelled'].includes(cardStatus)) {
+      matches = true;
+    }
+
+    if (matches) {
+      card.style.display = '';
+      visibleCount++;
+    } else {
+      card.style.display = 'none';
+    }
+  });
+
+  const emptyMsg = document.getElementById('userBookingsTabEmpty');
+  if (emptyMsg) {
+    if (visibleCount === 0 && cards.length > 0) {
+      emptyMsg.classList.remove('hidden');
+    } else {
+      emptyMsg.classList.add('hidden');
+    }
+  }
+}
+</script>
+{% endblock %}

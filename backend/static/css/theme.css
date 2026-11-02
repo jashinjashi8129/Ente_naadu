@@ -1,0 +1,363 @@
+/* ==========================================================================
+   ENTE NAADU - MODERN 3D DESIGN SYSTEM & KERALA COMMUNITY THEME
+   Zero-cost, Ultra-fast, GPU-accelerated CSS 3D transforms & animations
+   ========================================================================== */
+
+:root {
+  --primary-50: #ecfdf5;
+  --primary-100: #d1fae5;
+  --primary-200: #a7f3d0;
+  --primary-300: #6ee7b7;
+  --primary-400: #34d399;
+  --primary-500: #10b981;
+  --primary-600: #059669;
+  --primary-700: #047857;
+  --primary-800: #065f46;
+  --primary-900: #064e3b;
+  --primary-950: #022c22;
+
+  --accent-gold: #f59e0b;
+  --accent-gold-dark: #d97706;
+  --accent-gold-light: #fef3c7;
+
+  --slate-bg: #f8fafc;
+  --slate-surface: #ffffff;
+  --slate-border: #e2e8f0;
+  --slate-text-main: #0f172a;
+  --slate-text-muted: #64748b;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.04);
+  --shadow-3d: 0 20px 30px -10px rgba(4, 120, 87, 0.15), 0 10px 15px -5px rgba(15, 23, 42, 0.08);
+
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Base Smooth Scrolling & Typography */
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html.disable-smooth-scroll {
+  scroll-behavior: auto !important;
+}
+
+body {
+  font-family: 'Manjari', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  background-color: var(--slate-bg);
+  color: var(--slate-text-main);
+  overflow-x: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   3D CARD & PERSPECTIVE SYSTEM (Zero External Dependencies)
+   -------------------------------------------------------------------------- */
+.perspective-container {
+  perspective: 1200px;
+}
+
+.card-3d {
+  position: relative;
+  transition: transform var(--transition-smooth), box-shadow var(--transition-smooth), border-color var(--transition-smooth);
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.card-3d:hover {
+  box-shadow: var(--shadow-3d);
+}
+
+.card-3d-glare {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 70%);
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.card-3d:hover .card-3d-glare {
+  opacity: 1;
+}
+
+/* 3D Depth layers inside cards */
+.depth-layer-1 {
+  transform: translateZ(10px);
+}
+.depth-layer-2 {
+  transform: translateZ(20px);
+}
+.depth-layer-3 {
+  transform: translateZ(30px);
+}
+
+/* --------------------------------------------------------------------------
+   SCROLL REVEAL & ENTRANCE ANIMATIONS
+   -------------------------------------------------------------------------- */
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 600ms cubic-bezier(0.16, 1, 0.3, 1), transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-on-scroll.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger delay helpers */
+.delay-100 { transition-delay: 100ms; }
+.delay-200 { transition-delay: 200ms; }
+.delay-300 { transition-delay: 300ms; }
+.delay-400 { transition-delay: 400ms; }
+
+/* --------------------------------------------------------------------------
+   LIVE PULSE & STATUS INDICATORS
+   -------------------------------------------------------------------------- */
+.live-pulse {
+  position: relative;
+  display: inline-flex;
+}
+
+.live-pulse::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 9999px;
+  background-color: var(--primary-500);
+  opacity: 0.6;
+  animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.4); opacity: 0; }
+  100% { transform: scale(0.95); opacity: 0; }
+}
+
+/* --------------------------------------------------------------------------
+   HERO FLOATING BADGES & 3D GRADIENTS
+   -------------------------------------------------------------------------- */
+.floating-element {
+  animation: float-gentle 4s ease-in-out infinite;
+}
+
+.floating-element-reverse {
+  animation: float-gentle-reverse 5s ease-in-out infinite;
+}
+
+@keyframes float-gentle {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(1deg); }
+}
+
+@keyframes float-gentle-reverse {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(8px) rotate(-1deg); }
+}
+
+/* Glassmorphism Accents */
+.glass-header {
+  background: rgba(4, 120, 87, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Ticker Marquee for Urgent News */
+.ticker-wrap {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.ticker-content {
+  display: inline-block;
+  animation: marquee 25s linear infinite;
+}
+
+.ticker-content:hover {
+  animation-play-state: paused;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+/* --------------------------------------------------------------------------
+   BUTTONS & MICRO-INTERACTIONS
+   -------------------------------------------------------------------------- */
+.btn-premium {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-premium:hover {
+  transform: translateY(-2px);
+}
+
+.btn-premium:active {
+  transform: translateY(0px);
+}
+
+/* Shimmer Light Sweep on Primary Buttons */
+.btn-shimmer::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -60%;
+  width: 40%;
+  height: 200%;
+  background: linear-gradient(
+    60deg,
+    rgba(255, 255, 255, 0) 20%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 80%
+  );
+  transform: rotate(25deg);
+  transition: all 750ms ease;
+}
+
+.btn-shimmer:hover::after {
+  left: 120%;
+}
+
+/* --------------------------------------------------------------------------
+   CUSTOM SCROLLBAR
+   -------------------------------------------------------------------------- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Custom In-Card Scrollbar for Clean Dashboards */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* --------------------------------------------------------------------------
+   ACCESSIBILITY & REDUCED MOTION PREFERENCES
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .card-3d {
+    transform: none !important;
+  }
+  .floating-element, .floating-element-reverse {
+    animation: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   NAVBAR RESPONSIVENESS, DROPDOWNS & MOBILE DRAWER
+   -------------------------------------------------------------------------- */
+.navbar-nav-item {
+  transition: all var(--transition-fast);
+}
+
+.nav-link-active {
+  background-color: rgba(6, 78, 59, 0.9) !important;
+  color: #fde047 !important;
+  font-weight: 800 !important;
+  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-dropdown {
+  animation: dropdownFadeIn 180ms ease-out forwards;
+}
+
+/* --------------------------------------------------------------------------
+   STICKY NAVBAR ANCHOR OFFSET & VIEWPORT ALIGNMENT
+   Prevents fixed navigation header (~68px) from concealing section titles
+   -------------------------------------------------------------------------- */
+#directory,
+#blood-donors,
+#alerts,
+#shopOrdersSection,
+[data-scroll-target],
+section[id] {
+  scroll-margin-top: 5.5rem; /* ~88px offset */
+}
+
+/* Responsive modal viewport fit on 375px - 1920px screens */
+.modal-container-scrollable {
+  max-height: 90vh;
+  max-height: 90dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Body lock state while preserving scrollbar width */
+body.modal-open {
+  overflow: hidden !important;
+}
+
+/* Consistent card content sizing for neat grid alignment */
+.shop-card-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 280px;
+}
+
+

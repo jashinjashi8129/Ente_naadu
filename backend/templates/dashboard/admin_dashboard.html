@@ -1,0 +1,483 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}അഡ്മിൻ കൺസോൾ - എന്റെ നാട് (Ente Naadu Admin){% endblock %}
+
+{% block content %}
+
+<!-- Admin Executive Command Banner -->
+<section class="bg-gradient-to-b from-slate-950 via-slate-900 to-emerald-950 text-white py-10 sm:py-14 border-b border-slate-800">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+
+      <div class="space-y-2">
+        <div class="flex items-center space-x-2">
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider bg-amber-400 text-slate-950">
+            🛡️ സിംഗിൾ സൂപ്പർ അഡ്മിൻ
+          </span>
+          <span class="text-xs text-slate-400">പൂർണ്ണ നിയന്ത്രണ പാനൽ</span>
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-black text-white">അഡ്മിൻ കമാൻഡ് കൺസോൾ</h1>
+        <p class="text-xs sm:text-sm text-slate-300 font-medium">
+          കടകളുടെ അപ്രൂവൽ, പൊതു പരാതി പരിഹാരം, അടിയന്തിര മുന്നറിയിപ്പുകൾ എന്നിവ ഒരിടത്ത് നിയന്ത്രിക്കാം.
+        </p>
+      </div>
+
+      <div class="flex items-center space-x-3 self-start lg:self-auto flex-wrap gap-2">
+        <a href="{% url 'admin-shops-progress' %}" class="btn-premium px-4 sm:px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs sm:text-sm shadow-xl transition flex items-center space-x-2">
+          <span>📊</span>
+          <span>വ്യാപാരി പുരോഗതി (Progress)</span>
+        </a>
+        <a href="/admin/" target="_blank" class="btn-premium px-4 sm:px-5 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs sm:text-sm shadow-xl transition flex items-center space-x-2">
+          <span>⚙️</span>
+          <span>Django Core Admin</span>
+        </a>
+      </div>
+
+    </div>
+
+    <!-- 7-Metric High-Density Grid -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 mt-8 pt-8 border-t border-slate-800 perspective-container">
+
+      <div class="card-3d p-3 rounded-2xl bg-slate-900/90 border border-slate-800 text-center">
+        <span class="text-[10px] text-slate-400 font-bold block">നാട്ടുകാർ</span>
+        <div class="text-xl font-black text-white mt-1" data-count="{{ metrics.total_citizens }}">
+          {{ metrics.total_citizens }}
+        </div>
+      </div>
+
+      <div class="card-3d p-3 rounded-2xl bg-slate-900/90 border border-slate-800 text-center">
+        <span class="text-[10px] text-emerald-400 font-bold block">അംഗീകൃത കടകൾ</span>
+        <div class="text-xl font-black text-emerald-400 mt-1" data-count="{{ metrics.total_shops }}">
+          {{ metrics.total_shops }}
+        </div>
+      </div>
+
+      <div class="card-3d p-3 rounded-2xl bg-slate-900/90 border border-slate-800 text-center">
+        <span class="text-[10px] text-amber-400 font-bold block">കടകളുടെ ക്യൂ</span>
+        <div class="text-xl font-black text-amber-400 mt-1" data-count="{{ metrics.pending_shops_count }}">
+          {{ metrics.pending_shops_count }}
+        </div>
+      </div>
+
+      <div class="card-3d p-3 rounded-2xl bg-slate-900/90 border border-slate-800 text-center">
+        <span class="text-[10px] text-blue-400 font-bold block">സേവന ക്യൂ</span>
+        <div class="text-xl font-black text-blue-400 mt-1" data-count="{{ metrics.pending_directory_count }}">
+          {{ metrics.pending_directory_count }}
+        </div>
+      </div>
+
+      <div class="card-3d p-3 rounded-2xl bg-slate-900/90 border border-slate-800 text-center">
+        <span class="text-[10px] text-rose-400 font-bold block">പരാതികൾ</span>
+        <div class="text-xl font-black text-rose-400 mt-1" data-count="{{ metrics.open_complaints_count }}">
+          {{ metrics.open_complaints_count }}
+        </div>
+      </div>
+
+      <div class="card-3d p-3 rounded-2xl bg-slate-900/90 border border-slate-800 text-center">
+        <span class="text-[10px] text-blue-300 font-bold block">ഓർഡറുകൾ</span>
+        <div class="text-xl font-black text-blue-300 mt-1" data-count="{{ metrics.total_orders }}">
+          {{ metrics.total_orders }}
+        </div>
+      </div>
+
+      <div class="card-3d p-3 rounded-2xl bg-slate-900/90 border border-slate-800 text-center">
+        <span class="text-[10px] text-rose-300 font-bold block">രക്തദാതാക്കൾ</span>
+        <div class="text-xl font-black text-rose-400 mt-1" data-count="{{ metrics.total_donors }}">
+          {{ metrics.total_donors }}
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Quick Shop Progress KPI Bar -->
+    {% if admin_progress_summary %}
+    <div class="mt-8 p-5 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div class="space-y-1 flex-1">
+        <div class="flex items-center space-x-2">
+          <span class="text-xs font-black uppercase tracking-wider text-emerald-400">📊 വ്യാപാരി പുരോഗതി അവലോകനം</span>
+          <span class="text-xs font-black px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+            ശരാശരി {{ admin_progress_summary.average_progress }}%
+          </span>
+        </div>
+        <p class="text-xs text-slate-300">
+          ആകെ കടകൾ: <span class="font-bold text-white">{{ admin_progress_summary.total_shops }}</span> •
+          അംഗീകൃതമായവ: <span class="font-bold text-emerald-400">{{ admin_progress_summary.verified_shops }}</span> •
+          പരിശോധനയിൽ: <span class="font-bold text-amber-400">{{ admin_progress_summary.unverified_shops }}</span> •
+          ഉയർന്ന പുരോഗതി (≥80%): <span class="font-bold text-emerald-400">{{ admin_progress_summary.distribution.high }}</span>
+        </p>
+      </div>
+      <div class="flex items-center space-x-2 self-stretch md:self-auto flex-shrink-0">
+        <a href="{% url 'admin-shops-progress' %}" class="btn-premium w-full md:w-auto px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-md transition text-center">
+          വിശദമായ പ്രോഗ്രസ് ഡാഷ്ബോർഡ് →
+        </a>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+
+<!-- Admin Management Grid -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+    <!-- Left Column (7 cols): Shop Approvals & Complaints Queue -->
+    <div class="lg:col-span-7 space-y-8">
+
+      <!-- 1. Pending Shop Approvals -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="text-xl">🏪</span>
+            <h2 class="text-xl font-black text-slate-900">കടകളുടെ അപ്രൂവൽ ക്യൂ ({{ pending_shops|length }})</h2>
+          </div>
+          <span class="text-xs text-slate-500">പുതിയ കടകൾ പരിശോധിച്ച് ലൈവ് ആക്കാം</span>
+        </div>
+
+        <div class="space-y-3">
+          {% for shop in pending_shops %}
+          <div class="card-3d p-5 rounded-3xl bg-white border border-amber-200/90 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="space-y-1">
+              <div class="flex items-center space-x-2">
+                <h3 class="font-black text-base text-slate-900">{{ shop.name }}</h3>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900">പരിശോധിക്കണം</span>
+              </div>
+              <p class="text-xs text-emerald-800 font-bold">
+                വിഭാഗം: {{ shop.category.name|default:"ജനറൽ" }} • വാർഡ് {{ shop.ward_number }}
+              </p>
+              <p class="text-xs text-slate-600">
+                ഉടമസ്ഥൻ: {{ shop.owner.full_name }} (<a href="tel:{{ shop.contact_phone }}" class="text-emerald-700 underline font-bold">📞 {{ shop.contact_phone }}</a>)
+              </p>
+              <p class="text-xs text-slate-400">📍 {{ shop.address }}</p>
+            </div>
+
+            <!-- Approve Action Button -->
+            <form action="{% url 'admin-verify-shop' shop.id %}" method="POST" class="flex-shrink-0 self-stretch sm:self-auto">
+              {% csrf_token %}
+              <button type="submit" class="btn-premium w-full sm:w-auto px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs shadow-md transition">
+                ✓ അപ്രൂവ് ചെയ്യുക
+              </button>
+            </form>
+          </div>
+          {% empty %}
+          <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-center text-xs text-slate-400">
+            നിലവിൽ അപ്രൂവൽ കാത്തിരിക്കുന്ന കടകൾ ഒന്നും ഇല്ല.
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- 2. Pending Directory Approvals Queue -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="text-xl">🛠️</span>
+            <h2 class="text-xl font-black text-slate-900">സേവന ഡയറക്ടറി അപ്രൂവൽ ക്യൂ ({{ pending_directory_entries|length }})</h2>
+          </div>
+          <span class="text-xs text-slate-500">ഇലക്ട്രീഷ്യൻ, പ്ലംബർ, ടാക്സി അപേക്ഷകൾ</span>
+        </div>
+
+        <div class="space-y-3">
+          {% for entry in pending_directory_entries %}
+          <div class="card-3d p-5 rounded-3xl bg-white border border-blue-200/90 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="space-y-1">
+              <div class="flex items-center space-x-2">
+                <h3 class="font-black text-base text-slate-900">{{ entry.name }}</h3>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-900">{{ entry.get_category_display }}</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900">അനുമതി കാത്തിരിക്കുന്നു</span>
+              </div>
+              <p class="text-xs text-slate-600">
+                ഫോൺ: <a href="tel:{{ entry.phone_number }}" class="text-emerald-700 underline font-bold">📞 {{ entry.phone_number }}</a>
+                {% if entry.secondary_phone %} • മറ്റൊരു നമ്പർ: {{ entry.secondary_phone }}{% endif %}
+              </p>
+              <p class="text-xs text-slate-500">
+                📍 സ്റ്റാൻഡ്/വിലാസം: {{ entry.address_or_stand }} {% if entry.ward_number %}• വാർഡ് {{ entry.ward_number }}{% endif %}
+              </p>
+              <p class="text-[11px] text-slate-400">
+                സമർപ്പിച്ചത്: {% if entry.submitted_by %}{{ entry.submitted_by.full_name }} ({{ entry.submitted_by.phone_number }}){% else %}പൊതുജനം{% endif %} • {{ entry.created_at|date:"d M Y" }}
+              </p>
+            </div>
+
+            <!-- Approve & Reject Actions -->
+            <div class="flex items-center space-x-2 self-stretch sm:self-auto flex-shrink-0">
+              <form action="{% url 'admin-verify-directory' entry.id %}" method="POST" class="flex-1 sm:flex-initial">
+                {% csrf_token %}
+                <button type="submit" class="btn-premium w-full sm:w-auto px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs shadow-md transition">
+                  ✓ അപ്രൂവ് ചെയ്യുക
+                </button>
+              </form>
+              <form action="{% url 'admin-reject-directory' entry.id %}" method="POST" class="flex-1 sm:flex-initial" onsubmit="return confirm('ഈ സേവന അപേക്ഷ നിരസിക്കണമെന്ന് ഉറപ്പാണോ?');">
+                {% csrf_token %}
+                <button type="submit" class="w-full sm:w-auto px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-extrabold text-xs transition">
+                  ✕ നിരസിക്കുക
+                </button>
+              </form>
+            </div>
+          </div>
+          {% empty %}
+          <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-center text-xs text-slate-400">
+            നിലവിൽ അപ്രൂവൽ കാത്തിരിക്കുന്ന സേവന അപേക്ഷകൾ ഒന്നും ഇല്ല.
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- 3. Complaints Management Cell -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="text-xl">⚖️</span>
+            <h2 class="text-xl font-black text-slate-900">തീർപ്പാക്കാത്ത പരാതികൾ ({{ active_complaints|length }})</h2>
+          </div>
+          <span class="text-xs text-slate-500">ഔദ്യോഗിക മറുപടിയും സ്റ്റാറ്റസും നൽകുക</span>
+        </div>
+
+        <div class="space-y-4">
+          {% for comp in active_complaints %}
+          <div class="card-3d p-5 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-xs font-bold text-slate-400">#{{ comp.id }} • {{ comp.created_at|date:"d M Y" }}</span>
+                <h3 class="font-black text-base text-slate-900">{{ comp.title }}</h3>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-xs font-black uppercase bg-amber-100 text-amber-900 border border-amber-300">
+                {{ comp.get_status_display }}
+              </span>
+            </div>
+
+            <p class="text-xs text-slate-600 leading-relaxed">{{ comp.description }}</p>
+
+            <div class="text-[11px] text-slate-500 flex flex-wrap gap-3 pt-1">
+              <span><strong>സമർപ്പിച്ചത്:</strong> {% if comp.is_anonymous %}രഹസ്യ ഉപയോക്താവ്{% else %}{{ comp.citizen.full_name }} ({{ comp.citizen.phone_number }}){% endif %}</span>
+              <span><strong>വാർഡ്:</strong> {{ comp.ward_number }}</span>
+              {% if comp.location_details %}<span><strong>സ്ഥലം:</strong> {{ comp.location_details }}</span>{% endif %}
+            </div>
+
+            <!-- Resolution Form & Delete Form -->
+            <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+              <form action="{% url 'admin-complaint-resolve' comp.id %}" method="POST" class="flex-1 space-y-2">
+                {% csrf_token %}
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div class="sm:col-span-1">
+                    <select name="status" class="w-full px-2.5 py-1.5 text-xs font-bold border border-slate-300 rounded-lg bg-slate-50">
+                      <option value="in_progress" {% if comp.status == 'in_progress' %}selected{% endif %}>നടപടി സ്വീകരിക്കുന്നു</option>
+                      <option value="resolved" {% if comp.status == 'resolved' %}selected{% endif %}>പരിഹരിച്ചു</option>
+                      <option value="rejected" {% if comp.status == 'rejected' %}selected{% endif %}>തള്ളി</option>
+                    </select>
+                  </div>
+                  <div class="sm:col-span-2">
+                    <input type="text" name="remarks" value="{{ comp.admin_remarks }}" placeholder="ഔദ്യോഗിക മറുപടി രേഖപ്പെടുത്തുക (ഉദാ: KSEB ശരിയാക്കി)" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-slate-50">
+                  </div>
+                </div>
+                <button type="submit" class="btn-premium px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs shadow-sm">
+                  സ്റ്റാറ്റസ് രേഖപ്പെടുത്തുക
+                </button>
+              </form>
+              <form action="{% url 'complaint-delete' comp.id %}" method="POST" class="inline" onsubmit="return confirm('ഈ പരാതി നീക്കം ചെയ്യണമെന്ന് ഉറപ്പാണോ?');">
+                {% csrf_token %}
+                <button type="submit" class="px-2.5 py-1.5 rounded-lg text-rose-600 hover:bg-rose-50 border border-rose-200 transition text-xs font-bold flex items-center space-x-1" title="പരാതി ഡിലീറ്റ് ചെയ്യുക">
+                  <span>🗑️</span>
+                  <span>ഡിലീറ്റ്</span>
+                </button>
+              </form>
+            </div>
+
+          </div>
+          {% empty %}
+          <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-center text-xs text-slate-400">
+            തീർപ്പാക്കാൻ ബാക്കിയുള്ള പരാതികൾ ഒന്നും ഇല്ല.
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column (5 cols): Urgent Notice Broadcast & Recent Alerts -->
+    <div class="lg:col-span-5 space-y-8">
+
+      <!-- Notice Broadcaster Form -->
+      <div class="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm">
+        <div class="flex items-center space-x-2.5 mb-4">
+          <span class="text-xl">📢</span>
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-base">അറിയിപ്പ് പ്രസിദ്ധീകരിക്കാം</h3>
+            <p class="text-xs text-slate-500">നാട്ടിലെ എല്ലാവർക്കുമായി ലൈവ് അറിയിപ്പ് നൽകാം</p>
+          </div>
+        </div>
+
+        <form action="{% url 'admin-notice-create' %}" method="POST" class="space-y-3.5">
+          {% csrf_token %}
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">തലക്കെട്ട് (Title)*</label>
+            <input type="text" name="title" required placeholder="ഉദാ: നാളെ വൈദ്യുതി മുടങ്ങും" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50/50">
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">വിഭാഗം</label>
+              <select name="category" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50/50">
+                <option value="emergency">അടിയന്തര മുന്നറിയിപ്പ്</option>
+                <option value="panchayat">പഞ്ചായത്ത് നോട്ടീസ്</option>
+                <option value="medical">മെഡിക്കൽ ക്യാമ്പ്</option>
+                <option value="festival">ഉത്സവം / ആഘോഷം</option>
+                <option value="sports">കായികം / ക്ലബ്ബ്</option>
+                <option value="general">പൊതു അറിയിപ്പ്</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">സ്ഥലം (Venue)</label>
+              <input type="text" name="venue" placeholder="ബാധകമായ പ്രദേശം" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50/50">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">വിശദവിവരങ്ങൾ*</label>
+            <textarea name="description" required rows="3" placeholder="അറിയിപ്പിന്റെ വിവരങ്ങൾ..." class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50/50"></textarea>
+          </div>
+
+          <!-- Urgent Flag Checkbox -->
+          <div class="p-3 rounded-2xl bg-rose-50 border border-rose-200/80 flex items-center space-x-2.5">
+            <input type="checkbox" id="is_emergency" name="is_emergency" class="rounded text-rose-600 focus:ring-rose-500 h-4 w-4">
+            <label for="is_emergency" class="text-xs text-rose-900 font-black cursor-pointer">
+              🚨 അടിയന്തിര മുന്നറിയിപ്പ് (മുകളിൽ ചുവപ്പ് ബാനറായി ഫ്ലാഷ് ചെയ്യും)
+            </label>
+          </div>
+
+          <button type="submit" class="btn-premium btn-shimmer w-full py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs shadow-md transition">
+            പ്രസിദ്ധീകരിക്കുക
+          </button>
+        </form>
+      </div>
+
+      <!-- Recent Announcements List -->
+      <div class="space-y-3">
+        <h3 class="font-extrabold text-slate-900 text-base">നിലവിലെ അറിയിപ്പുകൾ</h3>
+        <div class="space-y-2.5">
+          {% for notice in recent_notices %}
+          <div class="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-start justify-between">
+            <div class="flex-1 pr-2">
+              <div class="flex items-center space-x-2 text-xs mb-1">
+                <span class="font-bold text-slate-900 line-clamp-1">{{ notice.title }}</span>
+                {% if notice.is_emergency %}
+                <span class="px-2 py-0.5 rounded text-[10px] font-black bg-rose-100 text-rose-800">അടിയന്തിരം</span>
+                {% else %}
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">{{ notice.get_category_display }}</span>
+                {% endif %}
+              </div>
+              <p class="text-xs text-slate-500 line-clamp-2">{{ notice.description }}</p>
+              <p class="text-[10px] text-slate-400 mt-1.5">{{ notice.created_at|date:"d M Y, h:i A" }}</p>
+            </div>
+            <form action="{% url 'notice-delete' notice.id %}" method="POST" class="inline flex-shrink-0" onsubmit="return confirm('\'{{ notice.title|escapejs }}\' എന്ന അറിയിപ്പ് നീക്കം ചെയ്യണമെന്ന് ഉറപ്പാണോ?');">
+              {% csrf_token %}
+              <button type="submit" class="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition text-xs" title="അറിയിപ്പ് ഡിലീറ്റ് ചെയ്യുക">
+                🗑️
+              </button>
+            </form>
+          </div>
+          {% empty %}
+          <p class="text-xs text-slate-400 text-center py-4">അറിയിപ്പുകൾ ഒന്നും നിലവിൽ ഇല്ല.</p>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Technology & Security Section (Exclusively for Admin Console) -->
+  <div class="mt-10">
+    <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 rounded-3xl p-6 sm:p-8 border border-slate-800 shadow-2xl text-white">
+
+      <!-- Section Header -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+        <div>
+          <div class="flex items-center space-x-2 mb-2">
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              🛡️ സിസ്റ്റം ആർക്കിടെക്ചർ & സെക്യൂരിറ്റി
+            </span>
+            <span class="text-xs text-slate-400">തത്സമയ ഡയഗ്നോസ്റ്റിക്സ്</span>
+          </div>
+          <h3 class="text-xl sm:text-2xl font-black text-slate-100">
+            സാങ്കേതികത & സുരക്ഷ
+          </h3>
+          <p class="text-xs sm:text-sm text-slate-400 mt-1">
+            ക്ലൗഡ് സെർവർ വഴി ₹0 ചെലവിൽ വികസിപ്പിച്ച അത്യാധുനിക ആർക്കിടെക്ചർ.
+          </p>
+        </div>
+
+        <!-- Quick Admin Action Links -->
+        <div class="flex items-center space-x-2.5 flex-wrap gap-2">
+          <a href="/api/v1/auth/status/" target="_blank" class="btn-premium px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 text-xs font-mono font-bold transition flex items-center space-x-1.5 shadow-sm">
+            <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>API Status</span>
+            <span>↗</span>
+          </a>
+          <a href="/admin/" target="_blank" class="btn-premium px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-extrabold transition flex items-center space-x-1.5 shadow-sm">
+            <span>⚙️</span>
+            <span>Django Core Admin</span>
+            <span>↗</span>
+          </a>
+          <a href="{% url 'admin-shops-progress' %}" class="btn-premium px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold transition flex items-center space-x-1.5">
+            <span>📊</span>
+            <span>ഷോപ്പ് പുരോഗതി</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 4-Pillar Architectural Breakdown -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+
+        <div class="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-1.5">
+          <div class="flex items-center space-x-2 text-emerald-400 text-xs font-bold">
+            <span class="text-base">☁️</span>
+            <span>ക്ലൗഡ് & ഹോസ്റ്റിംഗ്</span>
+          </div>
+          <p class="text-xs font-bold text-slate-200">Zero-Cost Cloud Deployment</p>
+          <p class="text-[11px] text-slate-400 leading-relaxed">
+            Render / Cloud PaaS സൗജന്യ ടയറിൽ പ്രതിമാസ സെർവർ ചെലവുകളില്ലാതെ പൂർണ്ണമായി പ്രവർത്തിക്കുന്നു.
+          </p>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-1.5">
+          <div class="flex items-center space-x-2 text-blue-400 text-xs font-bold">
+            <span class="text-base">🗄️</span>
+            <span>ഡാറ്റാബേസ് & മീഡിയ</span>
+          </div>
+          <p class="text-xs font-bold text-slate-200">ACID Relational Engine</p>
+          <p class="text-[11px] text-slate-400 leading-relaxed">
+            സുരക്ഷിതമായ റിലേഷണൽ ഡാറ്റാബേസും ചിത്രങ്ങൾക്കായി Cloudinary CDN മീഡിയ ഒപ്റ്റിമൈസേഷനും.
+          </p>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-1.5">
+          <div class="flex items-center space-x-2 text-amber-400 text-xs font-bold">
+            <span class="text-base">🗺️</span>
+            <span>മാപ്പിംഗ് ആർക്കിടെക്ചർ</span>
+          </div>
+          <p class="text-xs font-bold text-slate-200">OpenStreetMap & CartoDB</p>
+          <p class="text-[11px] text-slate-400 leading-relaxed">
+            ഗൂഗിൾ മാപ്പ് ബില്ലിംഗ് ചെലവുകളില്ലാതെ Leaflet.js + OSM വഴി സൗജന്യ തത്സമയ GPS മാപ്പിംഗ്.
+          </p>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-1.5">
+          <div class="flex items-center space-x-2 text-rose-400 text-xs font-bold">
+            <span class="text-base">🔒</span>
+            <span>ഡാറ്റാ സുരക്ഷ & പ്രൈവസി</span>
+          </div>
+          <p class="text-xs font-bold text-slate-200">Role-Based Access Control</p>
+          <p class="text-[11px] text-slate-400 leading-relaxed">
+            നമ്പറും പാസ്‌വേഡും ഉപയോഗിച്ചുള്ള സുരക്ഷിത ലോഗിൻ, CSRF ഷീൽഡ്, വ്യക്തിഗത ഡാറ്റാ സ്വകാര്യത.
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+</section>
+
+{% endblock %}

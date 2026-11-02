@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}കൂട്ടുകാരെ കണ്ടെത്തൂ - എന്റെ നാട് (Ente Naadu){% endblock %}
+
+{% block content %}
+
+<!-- Header & Search Banner -->
+<section class="bg-gradient-to-b from-emerald-800 to-slate-900 text-white py-10 sm:py-14">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div>
+        <span class="px-3 py-1 rounded-full bg-emerald-700/70 border border-emerald-500/40 text-emerald-200 text-xs font-bold uppercase tracking-wider">
+          നാട്ടിലെ കൂട്ടായ്മ
+        </span>
+        <h1 class="text-3xl sm:text-4xl font-black tracking-tight text-white mt-2">
+          കൂട്ടുകാരെ കണ്ടെത്തൂ (Find Friends)
+        </h1>
+        <p class="text-xs sm:text-sm text-emerald-100/90 mt-1 font-medium">
+          നിങ്ങളുടെ വാർഡിലെയും പഞ്ചായത്തിലെയും മറ്റ് നാട്ടുകാരെ കണ്ടെത്തി സുഹൃത്തുക്കളാകൂ
+        </p>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <a href="{% url 'friends-list' %}" class="btn-premium px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-xs sm:text-sm transition flex items-center space-x-2">
+          <span>👥</span>
+          <span>എന്റെ കൂട്ടുകാർ (My Friends)</span>
+        </a>
+        <a href="{% url 'chat-home' %}" class="btn-premium px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs sm:text-sm shadow-md transition flex items-center space-x-2">
+          <span>💬</span>
+          <span>പ്രൈവറ്റ് ചാറ്റ്</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Search Form -->
+    <form action="{% url 'find-friends' %}" method="GET" class="mt-8 space-y-3">
+      <div class="flex items-center bg-white rounded-2xl p-1.5 shadow-xl border border-white/20 focus-within:ring-4 focus-within:ring-emerald-400/30 transition max-w-3xl">
+        <span class="pl-3.5 text-slate-400 text-base">🔍</span>
+        <input
+          type="text"
+          name="q"
+          value="{{ search_query }}"
+          placeholder="പേര്, ഫോൺ നമ്പർ, പ്രദേശം എന്നിവ തിരയുക..."
+          class="w-full px-3 py-2.5 text-slate-800 text-xs sm:text-sm bg-transparent focus:outline-none font-medium placeholder-slate-400"
+        >
+        <button type="submit" class="btn-premium px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs sm:text-sm shadow transition">
+          തിരയുക
+        </button>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2 pt-2 text-xs">
+        <!-- Area Filter -->
+        <select name="area" onchange="this.form.submit()" class="px-3 py-2 rounded-xl bg-slate-800/90 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold">
+          <option value="">എല്ലാ പ്രദേശങ്ങളും (All Areas)</option>
+          {% for a in all_areas %}
+          <option value="{{ a.id }}" {% if selected_area == a.id|stringformat:"s" %}selected{% endif %}>{{ a.name }}</option>
+          {% endfor %}
+        </select>
+
+        <!-- Ward Filter -->
+        <input
+          type="number"
+          name="ward"
+          value="{{ selected_ward }}"
+          placeholder="വാർഡ് നമ്പർ (ഉദാ: 5)"
+          class="w-32 px-3 py-2 rounded-xl bg-slate-800/90 text-white border border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold placeholder-slate-400 text-xs"
+        >
+
+        {% if search_query or selected_area or selected_ward %}
+        <a href="{% url 'find-friends' %}" class="px-3 py-2 rounded-xl bg-rose-900/60 hover:bg-rose-800 text-rose-200 border border-rose-700/60 font-semibold transition">
+          ✕ ക്ലിയർ ചെയ്യുക
+        </a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</section>
+
+<!-- User Grid Section -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+  <div class="flex items-center justify-between mb-6">
+    <p class="text-xs sm:text-sm font-bold text-slate-600">
+      <strong class="text-slate-900 font-black">{{ total_count }}</strong> ആളുകളെ കണ്ടെത്തി
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+    {% for u in users %}
+    <div class="card-3d bg-white rounded-3xl p-5 border border-slate-200 shadow-sm hover:shadow-xl transition flex flex-col justify-between">
+
+      <div>
+        <!-- Profile Header -->
+        <div class="flex items-center space-x-3 mb-4">
+          {% if u.profile_photo %}
+          <img src="{{ u.profile_photo.url }}" alt="{{ u.full_name }}" class="w-14 h-14 rounded-2xl object-cover border border-slate-200 shadow-sm">
+          {% else %}
+          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 text-white font-black text-xl flex items-center justify-center shadow-sm">
+            {{ u.full_name|slice:":1"|upper }}
+          </div>
+          {% endif %}
+
+          <div class="flex-1 min-w-0">
+            <h3 class="font-extrabold text-base text-slate-900 truncate" title="{{ u.full_name }}">
+              {{ u.full_name }}
+            </h3>
+            <span class="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 mt-0.5">
+              {{ u.get_role_display }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Location details -->
+        <div class="space-y-1 text-xs text-slate-500 mb-4 bg-slate-50/70 p-3 rounded-2xl border border-slate-100">
+          <p class="flex items-center space-x-1.5 truncate">
+            <span>📍</span>
+            <span>{{ u.area.name|default:"കേരളം" }}</span>
+          </p>
+          {% if u.ward_number %}
+          <p class="flex items-center space-x-1.5 text-slate-600 font-medium">
+            <span>🏷️</span>
+            <span>വാർഡ് നമ്പർ: <strong>{{ u.ward_number }}</strong></span>
+          </p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Action Button Area -->
+      <div class="pt-3 border-t border-slate-100">
+        {% if u.rel_status == 'friends' %}
+          <div class="space-y-2">
+            <div class="py-1.5 px-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold text-center flex items-center justify-center space-x-1">
+              <span>✓</span>
+              <span>നിങ്ങളുടെ കൂട്ടുകാരനാണ്</span>
+            </div>
+            <a href="{% url 'chat-room' u.id %}" class="btn-premium w-full py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs text-center shadow-sm flex items-center justify-center space-x-1.5 transition">
+              <span>💬</span>
+              <span>ചാറ്റ് ചെയ്യാം</span>
+            </a>
+          </div>
+
+        {% elif u.rel_status == 'pending_sent' %}
+          <div class="space-y-2">
+            <div class="py-1.5 px-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-bold text-center flex items-center justify-center space-x-1">
+              <span class="live-pulse h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+              <span>റിക്വസ്റ്റ് അയച്ചിട്ടുണ്ട്</span>
+            </div>
+            <form action="{% url 'friend-request-cancel' u.req_id %}" method="POST" onsubmit="return confirm('ഫ്രണ്ട് റിക്വസ്റ്റ് റദ്ദാക്കണമെന്ന് ഉറപ്പാണോ?');">
+              {% csrf_token %}
+              <button type="submit" class="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
+                റദ്ദാക്കുക (Cancel Request)
+              </button>
+            </form>
+          </div>
+
+        {% elif u.rel_status == 'pending_received' %}
+          <div class="space-y-2">
+            <div class="py-1.5 px-3 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 text-[11px] font-bold text-center">
+              📩 റിക്വസ്റ്റ് വന്നിട്ടുണ്ട്
+            </div>
+            <form action="{% url 'friend-request-accept' u.req_id %}" method="POST">
+              {% csrf_token %}
+              <button type="submit" class="btn-premium w-full py-2 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-black text-xs shadow transition">
+                ✓ റിക്വസ്റ്റ് സ്വീകരിക്കുക
+              </button>
+            </form>
+          </div>
+
+        {% else %}
+          <!-- No relation: Send Request -->
+          <form action="{% url 'friend-request-send' u.id %}" method="POST">
+            {% csrf_token %}
+            <button type="submit" class="btn-premium w-full py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs shadow-sm flex items-center justify-center space-x-1.5 transition">
+              <span>➕</span>
+              <span>ഫ്രണ്ട് റിക്വസ്റ്റ് അയക്കുക</span>
+            </button>
+          </form>
+        {% endif %}
+      </div>
+
+    </div>
+    {% empty %}
+    <div class="col-span-full py-16 text-center bg-white rounded-3xl border border-slate-200 shadow-sm">
+      <span class="text-4xl block mb-2">👥</span>
+      <h3 class="text-base font-black text-slate-800">ആരെയും കണ്ടെത്തിയില്ല</h3>
+      <p class="text-xs text-slate-500 mt-1">മറ്റൊരു പേരോ വാർഡോ തിരഞ്ഞു നോക്കൂ</p>
+      {% if search_query or selected_area or selected_ward %}
+      <a href="{% url 'find-friends' %}" class="inline-block mt-4 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
+        എല്ലാ ആളുകളെയും കാണുക
+      </a>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+</section>
+
+{% endblock %}

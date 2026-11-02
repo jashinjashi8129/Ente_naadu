@@ -1,0 +1,594 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}അടുത്തുള്ള കടകൾ (Nearby Shops) - എന്റെ നാട്{% endblock %}
+
+{% block extra_head %}
+<!-- Leaflet CSS & JS (cdnjs) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<style>
+  #shopsMap {
+    min-height: 420px;
+    height: 540px;
+    width: 100%;
+    border-radius: 1.5rem;
+    z-index: 10;
+    background-color: #f1f5f9;
+  }
+  .leaflet-popup-content-wrapper {
+    border-radius: 1.25rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  }
+  .user-pulse-marker {
+    background: #2563eb;
+    border: 3px solid #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.35);
+    animation: userPulse 2s infinite;
+  }
+  @keyframes userPulse {
+    0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.6); }
+    70% { box-shadow: 0 0 0 14px rgba(37, 99, 235, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header & Filter Banner -->
+<section class="bg-gradient-to-b from-emerald-800 to-slate-900 text-white py-8 sm:py-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div>
+        <span class="px-3 py-1 rounded-full bg-emerald-700/70 border border-emerald-500/40 text-emerald-200 text-xs font-bold uppercase tracking-wider">
+          GPS ഡയറക്ടറി
+        </span>
+        <h1 class="text-3xl sm:text-4xl font-black tracking-tight text-white mt-2">
+          അടുത്തുള്ള കടകൾ (Nearby Shops)
+        </h1>
+        <p class="text-xs sm:text-sm text-emerald-100/90 mt-1 font-medium">
+          നിങ്ങളുടെ തൊട്ടടുത്തുള്ള കടകൾ, പാർലറുകൾ, മെഡിക്കൽ ഷോപ്പുകൾ എന്നിവ മാപ്പിൽ കാണാം, വഴി അറിയാം.
+        </p>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <a href="{% url 'shop-list' %}" class="btn-premium px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-xs sm:text-sm transition flex items-center space-x-2">
+          <span>🏪</span>
+          <span>എല്ലാ കടകളും</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Controls Row: Search, Category, Radius, GPS Detect -->
+    <div class="mt-6 bg-slate-800/80 p-4 rounded-3xl border border-slate-700/80 space-y-3">
+
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+
+        <!-- Search input -->
+        <div class="md:col-span-5 flex items-center bg-white rounded-2xl px-3 py-1 shadow-inner text-slate-800">
+          <span class="text-slate-400 mr-2 text-sm">🔍</span>
+          <input
+            type="text"
+            id="searchInput"
+            value="{{ search_query }}"
+            placeholder="കടയുടെ പേര്, സാധനം തിരയുക..."
+            class="w-full py-2 bg-transparent focus:outline-none text-xs sm:text-sm font-medium"
+            onkeydown="if(event.key === 'Enter'){ triggerReload(); }"
+          >
+        </div>
+
+        <!-- Category Dropdown -->
+        <div class="md:col-span-4">
+          <select
+            id="categorySelect"
+            onchange="triggerReload()"
+            class="w-full px-3 py-3 rounded-2xl bg-slate-700 text-white border border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold text-xs sm:text-sm"
+          >
+            <option value="">എല്ലാ വിഭാഗങ്ങളും (All Categories)</option>
+            {% for cat in all_categories %}
+            <option value="{{ cat.id }}" {% if selected_category == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- GPS Button -->
+        <div class="md:col-span-3">
+          <button
+            type="button"
+            id="btnDetectGPS"
+            onclick="detectLocation(false)"
+            class="btn-premium w-full py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs shadow-md transition flex items-center justify-center space-x-1.5"
+          >
+            <span>📍</span>
+            <span>എന്റെ ലൊക്കേഷൻ</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Distance Radius Pills & Live Notification Banner -->
+      <div class="flex flex-wrap items-center justify-between pt-2 border-t border-slate-700/60 gap-3">
+        <div class="flex items-center space-x-2">
+          <span class="text-xs text-slate-300 font-bold">പരിധി (Radius):</span>
+          <div class="flex items-center space-x-1">
+            {% for r in radius_options %}
+            <button
+              type="button"
+              onclick="setRadius({{ r }})"
+              id="radiusBtn-{{ r }}"
+              class="px-3 py-1 rounded-xl text-xs font-black transition radius-btn {% if selected_radius == r %}bg-emerald-600 text-white shadow{% else %}bg-slate-700/80 text-slate-300 hover:bg-slate-700{% endif %}"
+            >
+              {{ r }} km
+            </button>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div id="gpsAlertBox" class="hidden text-xs font-semibold px-3 py-1.5 rounded-xl border"></div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- Map & Shops Layout -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Leaflet Map Container -->
+    <div class="lg:col-span-2 space-y-3">
+      <div class="bg-white p-2 rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div id="shopsMap"></div>
+      </div>
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-500 px-2 gap-2">
+        <div class="flex items-center space-x-4">
+          <span class="flex items-center space-x-1.5">
+            <span class="w-3 h-3 rounded-full bg-blue-600 inline-block border border-white shadow-sm"></span>
+            <span>നിങ്ങളുടെ സ്ഥാനം</span>
+          </span>
+          <span class="flex items-center space-x-1.5">
+            <span class="w-3 h-3 rounded-full bg-amber-500 inline-block border border-white shadow-sm"></span>
+            <span>കടകൾ</span>
+          </span>
+        </div>
+        <span class="text-slate-400">💡 മാപ്പിൽ എവിടെയും ക്ലിക്ക് ചെയ്ത് ലൊക്കേഷൻ മാറ്റാം</span>
+      </div>
+    </div>
+
+    <!-- Sidebar: Nearby Shops List -->
+    <div class="space-y-4">
+      <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+          <h3 class="font-black text-base text-slate-900">
+            കണ്ടെത്തിയ കടകൾ
+          </h3>
+          <span id="shopsCountBadge" class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-black">
+            ലോഡ് ചെയ്യുന്നു...
+          </span>
+        </div>
+
+        <div id="shopsListContainer" class="space-y-3 max-h-[460px] overflow-y-auto pr-1 custom-scrollbar">
+          <div class="p-8 text-center text-slate-400 text-xs">
+            <span class="text-3xl block mb-2 animate-bounce">🧭</span>
+            കടകൾ തിരയുന്നു...
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// State Management
+let map = null;
+let currentTileLayer = null;
+let userMarker = null;
+let radiusCircle = null;
+let shopMarkersGroup = null;
+
+let currentRadiusKm = {{ selected_radius|default:10 }};
+let currentUserLat = {{ user_location.latitude|default:"null" }};
+let currentUserLng = {{ user_location.longitude|default:"null" }};
+const defaultCenterLat = {{ default_center_lat|default:10.8505 }};
+const defaultCenterLng = {{ default_center_lng|default:76.2711 }};
+
+// Configurable Tile Providers (Complies with OSM Foundation policies)
+const TILE_PROVIDERS = {
+  osm: {
+    name: 'OpenStreetMap',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    options: {
+      maxZoom: 19,
+      subdomains: ['a', 'b', 'c'],
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
+    }
+  },
+  carto: {
+    name: 'CartoDB Voyager',
+    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    options: {
+      maxZoom: 19,
+      subdomains: ['a', 'b', 'c', 'd'],
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>'
+    }
+  }
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+  initMap();
+
+  // 1. If saved location is available from session/user profile, place marker and load nearby shops
+  if (currentUserLat !== null && currentUserLng !== null) {
+    updateUserPos(currentUserLat, currentUserLng, true);
+  } else {
+    // 2. Load all available shops immediately so map is never blank
+    loadNearbyShops();
+    // 3. Non-blocking background GPS detection
+    detectLocation(true);
+  }
+});
+
+function initMap() {
+  const mapElement = document.getElementById('shopsMap');
+  if (!mapElement) return;
+
+  // Prevent double-initialization
+  if (map !== null) {
+    map.invalidateSize();
+    return;
+  }
+
+  // Ensure Leaflet is loaded
+  if (typeof L === 'undefined') {
+    showAlert("മാപ്പ് ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല. പേജ് റീഫ്രഷ് ചെയ്യുക.", "error");
+    return;
+  }
+
+  const initialLat = (currentUserLat !== null) ? currentUserLat : defaultCenterLat;
+  const initialLng = (currentUserLng !== null) ? currentUserLng : defaultCenterLng;
+  const initialZoom = (currentUserLat !== null) ? 13 : 11;
+
+  map = L.map('shopsMap', {
+    zoomControl: true,
+    scrollWheelZoom: true
+  }).setView([initialLat, initialLng], initialZoom);
+
+  // Load Primary Tile Layer (OpenStreetMap HTTPS) with fallback handler
+  loadTileLayer('osm');
+
+  // Group for shop markers
+  shopMarkersGroup = L.featureGroup().addTo(map);
+
+  // Map Click Handler: Allows manual position setting with no disruptive popups
+  map.on('click', function(e) {
+    updateUserPos(e.latlng.lat, e.latlng.lng, true);
+    showAlert("✓ നിങ്ങളുടെ സ്ഥാനം നിശ്ചയിച്ചു! അടുത്തുള്ള കടകൾ ക്രമീകരിച്ചു.", "success");
+  });
+
+  // Safe Invalidation: Fixes tile blankness on hidden layouts, font-load shifts, or window resize
+  setTimeout(function() {
+    if (map) map.invalidateSize();
+  }, 250);
+
+  setTimeout(function() {
+    if (map) map.invalidateSize();
+  }, 800);
+
+  window.addEventListener('resize', function() {
+    if (map) map.invalidateSize();
+  });
+}
+
+function loadTileLayer(providerKey) {
+  const provider = TILE_PROVIDERS[providerKey] || TILE_PROVIDERS.osm;
+
+  if (currentTileLayer && map.hasLayer(currentTileLayer)) {
+    map.removeLayer(currentTileLayer);
+  }
+
+  currentTileLayer = L.tileLayer(provider.url, provider.options).addTo(map);
+
+  // If OSM tiles fail, automatically switch to CartoDB fallback
+  if (providerKey === 'osm') {
+    let tileErrorCount = 0;
+    currentTileLayer.on('tileerror', function() {
+      tileErrorCount++;
+      if (tileErrorCount === 4) {
+        console.warn("OpenStreetMap tile error limit reached. Switching to fallback CartoDB tile layer.");
+        loadTileLayer('carto');
+      }
+    });
+  }
+}
+
+function detectLocation(isSilent) {
+  const btn = document.getElementById('btnDetectGPS');
+
+  if (!navigator.geolocation) {
+    if (!isSilent) {
+      showAlert("ഈ ബ്രൗസറിൽ GPS ജിയോലൊക്കേഷൻ ലഭ്യമല്ല. മാപ്പിൽ ക്ലിക്ക് ചെയ്ത് സ്ഥാനം നിശ്ചയിക്കാം.", "warning");
+    }
+    return;
+  }
+
+  if (!isSilent) {
+    showAlert("GPS സ്ഥാനം കണ്ടെത്തുന്നു...", "info");
+    if (btn) btn.disabled = true;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      if (btn) btn.disabled = false;
+      showAlert("✓ GPS ലൊക്കേഷൻ കണ്ടെത്തി!", "success");
+      updateUserPos(pos.coords.latitude, pos.coords.longitude, true);
+    },
+    function(err) {
+      if (btn) btn.disabled = false;
+      // Do not block map rendering if GPS permission is denied
+      if (!isSilent) {
+        if (err.code === 1) {
+          showAlert("ലൊക്കേഷൻ അനുമതി നൽകിയിട്ടില്ല. മാപ്പിൽ ക്ലിക്ക് ചെയ്തോ താഴെ നിന്നോ നിങ്ങളുടെ സ്ഥലം തിരഞ്ഞെടുക്കാം.", "warning");
+        } else {
+          showAlert("GPS സ്ഥാനം ലഭ്യമല്ല. മാപ്പിൽ നേരിട്ട് ക്ലിക്ക് ചെയ്ത് സ്ഥലം അടയാളപ്പെടുത്താം.", "warning");
+        }
+      } else {
+        showAlert("📍 നിങ്ങളുടെ കൃത്യമായ സ്ഥാനം അറിയാൻ 'എന്റെ ലൊക്കേഷൻ' ക്ലിക്ക് ചെയ്യുകയോ മാപ്പിൽ ക്ലിക്ക് ചെയ്യുകയോ ചെയ്യാം.", "info");
+      }
+    },
+    { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+  );
+}
+
+function updateUserPos(lat, lng, reloadShops) {
+  currentUserLat = lat;
+  currentUserLng = lng;
+
+  if (!map) return;
+
+  if (userMarker && map.hasLayer(userMarker)) {
+    map.removeLayer(userMarker);
+  }
+  if (radiusCircle && map.hasLayer(radiusCircle)) {
+    map.removeLayer(radiusCircle);
+  }
+
+  const userIcon = L.divIcon({
+    className: 'user-pulse-marker',
+    iconSize: [18, 18],
+    iconAnchor: [9, 9]
+  });
+
+  userMarker = L.marker([lat, lng], { icon: userIcon }).addTo(map);
+  userMarker.bindPopup("<div class='p-1 text-center font-bold text-xs'>📍 നിങ്ങൾ ഇവിടെയാണ്</div>");
+
+  radiusCircle = L.circle([lat, lng], {
+    color: '#d97706',
+    fillColor: '#f59e0b',
+    fillOpacity: 0.1,
+    radius: currentRadiusKm * 1000
+  }).addTo(map);
+
+  map.setView([lat, lng], 13);
+
+  if (reloadShops !== false) {
+    loadNearbyShops();
+  }
+}
+
+function setRadius(r) {
+  currentRadiusKm = r;
+  document.querySelectorAll('.radius-btn').forEach(b => {
+    b.classList.remove('bg-emerald-600', 'text-white', 'shadow');
+    b.classList.add('bg-slate-700/80', 'text-slate-300');
+  });
+  const activeBtn = document.getElementById(`radiusBtn-${r}`);
+  if (activeBtn) {
+    activeBtn.classList.remove('bg-slate-700/80', 'text-slate-300');
+    activeBtn.classList.add('bg-emerald-600', 'text-white', 'shadow');
+  }
+
+  if (currentUserLat !== null && currentUserLng !== null) {
+    if (radiusCircle && map.hasLayer(radiusCircle)) {
+      map.removeLayer(radiusCircle);
+    }
+    radiusCircle = L.circle([currentUserLat, currentUserLng], {
+      color: '#d97706',
+      fillColor: '#f59e0b',
+      fillOpacity: 0.1,
+      radius: currentRadiusKm * 1000
+    }).addTo(map);
+  }
+
+  loadNearbyShops();
+}
+
+function triggerReload() {
+  loadNearbyShops();
+}
+
+async function loadNearbyShops() {
+  const container = document.getElementById('shopsListContainer');
+  const countBadge = document.getElementById('shopsCountBadge');
+  const cat = document.getElementById('categorySelect').value;
+  const q = document.getElementById('searchInput').value.trim();
+
+  if (shopMarkersGroup) {
+    shopMarkersGroup.clearLayers();
+  }
+
+  container.innerHTML = '<div class="p-6 text-center text-slate-400 text-xs"><span class="inline-block animate-spin mr-1">⌛</span> കടകൾ കണ്ടെത്തുന്നു...</div>';
+
+  let url = `/api/v1/shops/nearby/?radius=${currentRadiusKm}`;
+  if (currentUserLat !== null && currentUserLng !== null) {
+    url += `&lat=${currentUserLat}&lng=${currentUserLng}`;
+  }
+  if (cat) url += `&category=${cat}`;
+  if (q) url += `&search=${encodeURIComponent(q)}`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      container.innerHTML = '<div class="p-6 text-center text-slate-400 text-xs">വിവരങ്ങൾ ലഭ്യമായില്ല. ദയവായി വീണ്ടും ശ്രമിക്കുക.</div>';
+      countBadge.innerText = '0 കടകൾ';
+      return;
+    }
+
+    const data = await res.json();
+    const shops = data.shops || [];
+    countBadge.innerText = `${shops.length} കടകൾ`;
+
+    if (shops.length === 0) {
+      container.innerHTML = `
+        <div class="p-6 text-center text-slate-400 text-xs">
+          <span class="text-3xl block mb-2">🏪</span>
+          <p class="font-bold text-slate-700">കടകൾ ഒന്നും കണ്ടെത്തിയില്ല.</p>
+          <p class="mt-1">മുകളിലെ റേഡിയസ് കൂട്ടുകയോ മറ്റൊരു വിഭാഗം തിരഞ്ഞെടുക്കുകയോ ചെയ്യാം.</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = '';
+    const validMarkers = [];
+
+    shops.forEach(s => {
+      const lat = parseFloat(s.latitude);
+      const lng = parseFloat(s.longitude);
+
+      if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        return;
+      }
+
+      // Custom Clean Shop Pin
+      const shopIcon = L.divIcon({
+        className: 'custom-shop-pin',
+        html: `
+          <div style="background-color: #059669; color: white; width: 34px; height: 34px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 16px; border: 2.5px solid white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.25);">
+            🏪
+          </div>
+        `,
+        iconSize: [34, 34],
+        iconAnchor: [17, 17],
+        popupAnchor: [0, -18]
+      });
+
+      const distanceDisplay = s.distance_km !== null && s.distance_km !== undefined
+        ? `📏 ദൂരം: <strong>${s.distance_km} km</strong> അകലെ`
+        : `📍 മാപ്പിൽ ക്ലിക്ക് ചെയ്ത് ദൂരം അറിയാം`;
+
+      const popupHtml = `
+        <div class="p-2 space-y-2 min-w-[210px] text-slate-800">
+          <div>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">
+              ${escapeHtml(s.category_name || 'ജനറൽ')}
+            </span>
+            <h4 class="font-black text-sm text-slate-900 mt-1 leading-tight">${escapeHtml(s.name)}</h4>
+            <p class="text-[11px] text-slate-500 mt-0.5">${escapeHtml(s.address || '')}</p>
+          </div>
+
+          <div class="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-xl">
+            ${distanceDisplay}
+          </div>
+
+          <div class="flex items-center space-x-1.5 pt-1">
+            <a href="${s.detail_url}" class="flex-1 py-1.5 px-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs text-center shadow transition">
+              കട കാണുക
+            </a>
+            <a href="${s.directions_url}" target="_blank" rel="noopener" class="py-1.5 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs text-center shadow flex items-center space-x-1 transition" title="വഴി കാണിക്കുക (Google Maps Navigation)">
+              <span>🗺️</span>
+              <span>വഴി</span>
+            </a>
+          </div>
+        </div>
+      `;
+
+      const m = L.marker([lat, lng], { icon: shopIcon }).bindPopup(popupHtml);
+      shopMarkersGroup.addLayer(m);
+      validMarkers.push(m);
+
+      // 2. Add sidebar card
+      const card = document.createElement('div');
+      card.className = 'p-3.5 rounded-2xl border border-slate-100 bg-slate-50/70 hover:bg-emerald-50/60 transition cursor-pointer space-y-2';
+      card.onclick = function() {
+        map.setView([lat, lng], 15);
+        m.openPopup();
+      };
+
+      const cardDistanceText = s.distance_km !== null && s.distance_km !== undefined
+        ? `📏 ${s.distance_km} km`
+        : `📍 വാർഡ് ${s.ward_number || '-'}`;
+
+      card.innerHTML = `
+        <div class="flex items-start justify-between">
+          <div>
+            <span class="text-[10px] font-bold text-slate-500 uppercase">${escapeHtml(s.category_name || 'ജനറൽ')}</span>
+            <h4 class="font-black text-xs text-slate-900 leading-tight">${escapeHtml(s.name)}</h4>
+            <p class="text-[11px] text-slate-500 mt-0.5">${escapeHtml(s.address || '')}</p>
+          </div>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-black ${s.is_open ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+            ${s.is_open ? 'തുറന്നിരിക്കുന്നു' : 'അടച്ചു'}
+          </span>
+        </div>
+
+        <div class="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
+          <span class="font-bold text-emerald-800">${cardDistanceText}</span>
+          <div class="flex items-center space-x-1" onclick="event.stopPropagation();">
+            <a href="${s.detail_url}" class="px-2.5 py-1 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 text-[11px] font-bold transition">
+              കട കാണുക
+            </a>
+            <a href="${s.directions_url}" target="_blank" rel="noopener" class="px-2.5 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] font-bold shadow-sm transition flex items-center space-x-1">
+              <span>🗺️</span>
+              <span>വഴി</span>
+            </a>
+          </div>
+        </div>
+      `;
+
+      container.appendChild(card);
+    });
+
+    // Auto-fit to show all shops if user position has not yet been set
+    if (currentUserLat === null && currentUserLng === null && validMarkers.length > 0) {
+      map.fitBounds(shopMarkersGroup.getBounds().pad(0.12));
+    }
+
+  } catch (e) {
+    console.error("Load nearby shops error:", e);
+    container.innerHTML = '<div class="p-6 text-center text-rose-500 text-xs">കണക്ഷൻ തകരാർ. ദയവായി വീണ്ടും ശ്രമിക്കുക.</div>';
+  }
+}
+
+function showAlert(msg, type) {
+  const box = document.getElementById('gpsAlertBox');
+  if (!box) return;
+
+  box.classList.remove('hidden', 'bg-emerald-500/20', 'text-emerald-200', 'border-emerald-500/40', 'bg-amber-500/20', 'text-amber-200', 'border-amber-500/40', 'bg-rose-500/20', 'text-rose-200', 'border-rose-500/40', 'bg-blue-500/20', 'text-blue-200', 'border-blue-500/40');
+
+  if (type === 'success') {
+    box.classList.add('bg-emerald-500/20', 'text-emerald-200', 'border-emerald-500/40');
+  } else if (type === 'error') {
+    box.classList.add('bg-rose-500/20', 'text-rose-200', 'border-rose-500/40');
+  } else if (type === 'info') {
+    box.classList.add('bg-blue-500/20', 'text-blue-200', 'border-blue-500/40');
+  } else {
+    box.classList.add('bg-amber-500/20', 'text-amber-200', 'border-amber-500/40');
+  }
+
+  box.innerText = msg;
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+</script>
+{% endblock %}

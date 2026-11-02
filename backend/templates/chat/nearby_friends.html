@@ -1,0 +1,446 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}അടുത്തുള്ള കൂട്ടുകാർ (Nearby Friends) - എന്റെ നാട്{% endblock %}
+
+{% block content %}
+<!-- Leaflet CSS & JS (Free, Zero-Cost OpenStreetMap via cdnjs) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha512-puJW3E/qXDqYd9IfhAI54BJEaWIfloJ7JKsGNbIVDwyLMQAt+IypCwVUDA9Wy53LI47PPX9ZXY++of972RgOZA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<style>
+  #friendsMap {
+    height: 520px;
+    width: 100%;
+    border-radius: 1.5rem;
+    z-index: 10;
+  }
+  .leaflet-popup-content-wrapper {
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  }
+  .user-pulse-marker {
+    background: #2563eb;
+    border: 3px solid #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.35);
+    animation: userPulse 2s infinite;
+  }
+  @keyframes userPulse {
+    0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.6); }
+    70% { box-shadow: 0 0 0 14px rgba(37, 99, 235, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+  }
+</style>
+
+<!-- Header & Privacy Banner -->
+<section class="bg-gradient-to-b from-emerald-800 to-slate-900 text-white py-8 sm:py-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div>
+        <div class="flex items-center space-x-2">
+          <span class="px-3 py-1 rounded-full bg-emerald-700/70 border border-emerald-500/40 text-emerald-200 text-xs font-bold uppercase tracking-wider">
+            GPS മാപ്പ്
+          </span>
+          {% if user_location.is_sharing_enabled and not user_location.is_paused %}
+          <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[11px] font-bold flex items-center space-x-1">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            <span>ഷെയറിങ് സജീവം (ON)</span>
+          </span>
+          {% else %}
+          <span class="px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-400 text-amber-300 text-[11px] font-bold">
+            ഷെയറിങ് ഓഫാണ് (OFF)
+          </span>
+          {% endif %}
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-black tracking-tight text-white mt-2">
+          അടുത്തുള്ള കൂട്ടുകാർ (Nearby Friends)
+        </h1>
+        <p class="text-xs sm:text-sm text-emerald-100/90 mt-1 font-medium">
+          ലൊക്കേഷൻ ഷെയർ ചെയ്ത സുഹൃത്തുക്കളെ മാപ്പിൽ കാണാം, ദൂരം അറിയാം, നേരിട്ട് ചാറ്റ് ചെയ്യാം.
+        </p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <a href="{% url 'location-settings' %}" class="btn-premium px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-xs sm:text-sm transition flex items-center space-x-2">
+          <span>⚙️</span>
+          <span>പ്രൈവസി ക്രമീകരണങ്ങൾ</span>
+        </a>
+        <a href="{% url 'friends-list' %}" class="btn-premium px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs sm:text-sm transition flex items-center space-x-2">
+          <span>👥</span>
+          <span>എന്റെ കൂട്ടുകാർ</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Controls Row: Radius Filter & GPS Refresh -->
+    <div class="mt-6 flex flex-wrap items-center justify-between gap-4 bg-slate-800/80 p-3.5 rounded-2xl border border-slate-700/80">
+
+      <!-- Distance Radius Filter -->
+      <div class="flex items-center space-x-2">
+        <span class="text-xs text-slate-300 font-bold">പരിധി (Radius):</span>
+        <div class="flex items-center space-x-1">
+          {% for r in radius_options %}
+          <button
+            type="button"
+            onclick="setRadius({{ r }})"
+            id="radiusBtn-{{ r }}"
+            class="px-3 py-1.5 rounded-xl text-xs font-black transition radius-btn {% if selected_radius == r %}bg-emerald-600 text-white shadow{% else %}bg-slate-700/80 text-slate-300 hover:bg-slate-700{% endif %}"
+          >
+            {{ r }} km
+          </button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- GPS Refresh Button -->
+      <div class="flex items-center space-x-2">
+        <button
+          type="button"
+          id="btnDetectGPS"
+          onclick="detectUserLocation()"
+          class="btn-premium px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs shadow-md transition flex items-center space-x-1.5"
+        >
+          <span>📍</span>
+          <span>നിലവിലെ സ്ഥാനം കണ്ടെത്തുക (GPS)</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Status Notice Alert -->
+    <div id="gpsAlertBox" class="mt-3 hidden p-3 rounded-xl text-xs font-semibold"></div>
+
+    {% if not user_location.is_sharing_enabled %}
+    <div class="mt-3 p-3 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-200 text-xs flex items-center justify-between">
+      <span>🔒 നിങ്ങളുടെ ലൊക്കേഷൻ ഷെയറിങ് ഇപ്പോൾ ഓഫാണ്. സുഹൃത്തുക്കൾക്ക് നിങ്ങളുടെ സ്ഥാനം കാണാൻ പ്രൈവസി ഓപ്ഷൻ ഓൺ ചെയ്യാം.</span>
+      <a href="{% url 'location-settings' %}" class="underline font-bold text-amber-300 ml-2">ഓൺ ചെയ്യുക</a>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+
+<!-- Map & Friends List Layout -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Leaflet Map Container -->
+    <div class="lg:col-span-2 space-y-3">
+      <div class="bg-white p-2 rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div id="friendsMap"></div>
+      </div>
+      <div class="flex items-center justify-between text-xs text-slate-500 px-2">
+        <div class="flex items-center space-x-4">
+          <span class="flex items-center space-x-1.5">
+            <span class="w-3 h-3 rounded-full bg-blue-600 inline-block border border-white"></span>
+            <span>നിങ്ങളുടെ സ്ഥാനം</span>
+          </span>
+          <span class="flex items-center space-x-1.5">
+            <span class="w-3 h-3 rounded-full bg-emerald-600 inline-block border border-white"></span>
+            <span>കൂട്ടുകാരുടെ സ്ഥാനം</span>
+          </span>
+        </div>
+        <span>OpenStreetMap tiles (₹0 Free Tier)</span>
+      </div>
+    </div>
+
+    <!-- Sidebar: Nearby Friends List -->
+    <div class="space-y-4">
+      <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+          <h3 class="font-black text-base text-slate-900">
+            പരിധിയിലുള്ള കൂട്ടുകാർ
+          </h3>
+          <span id="friendsCountBadge" class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black">
+            0 പേർ
+          </span>
+        </div>
+
+        <div id="friendsListContainer" class="space-y-3 max-h-[460px] overflow-y-auto pr-1 custom-scrollbar">
+          <div class="p-8 text-center text-slate-400 text-xs">
+            <span class="text-3xl block mb-2">🧭</span>
+            ലൊക്കേഷൻ കണ്ടെത്തിക്കൊണ്ടിരിക്കുന്നു...
+          </div>
+        </div>
+      </div>
+
+      <!-- Privacy Guarantee Card -->
+      <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-600 text-xs space-y-1.5">
+        <h4 class="font-black text-slate-900 text-xs flex items-center space-x-1">
+          <span>🛡️</span>
+          <span>എന്റെ നാട് പ്രൈവസി ഉറപ്പ്</span>
+        </h4>
+        <p>
+          നിങ്ങൾ പരസ്പരം ഫ്രണ്ട്സ് ആയി അംഗീകരിച്ചവർക്ക് മാത്രമേ ലൊക്കേഷൻ കാണാൻ സാധിക്കൂ. അജ്ഞാതർക്കോ വ്യാപാരികൾക്കോ നിങ്ങളുടെ സ്ഥാനം ഒരിക്കലും ലഭ്യമാകില്ല.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Map & GPS Logic -->
+<script>
+let map = null;
+let userMarker = null;
+let friendMarkers = [];
+let radiusCircle = null;
+let currentRadiusKm = {{ selected_radius }};
+let currentUserLat = {{ user_location.latitude|default:"null" }};
+let currentUserLng = {{ user_location.longitude|default:"null" }};
+
+document.addEventListener('DOMContentLoaded', function() {
+  initMap();
+
+  // If user already has coordinates saved, center and load
+  if (currentUserLat && currentUserLng) {
+    updateUserMarker(currentUserLat, currentUserLng);
+    loadNearbyFriends(currentUserLat, currentUserLng, currentRadiusKm);
+  } else {
+    // Try to auto-detect browser GPS on first visit
+    detectUserLocation();
+  }
+});
+
+function initMap() {
+  // Default centered at Kerala if no user position
+  const defaultLat = currentUserLat || 10.8505;
+  const defaultLng = currentUserLng || 76.2711;
+  const defaultZoom = (currentUserLat && currentUserLng) ? 13 : 8;
+
+  map = L.map('friendsMap').setView([defaultLat, defaultLng], defaultZoom);
+
+  // OpenStreetMap Tile Layer (Free & standard compliant)
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+
+  // Manual click on map to set position if GPS is unavailable
+  map.on('click', function(e) {
+    if (confirm("ഈ പോയിന്റ് നിങ്ങളുടെ നിലവിലെ ലൊക്കേഷൻ ആയി സെറ്റ് ചെയ്യണോ?")) {
+      updateUserCoordinates(e.latlng.lat, e.latlng.lng);
+    }
+  });
+}
+
+function detectUserLocation() {
+  const alertBox = document.getElementById('gpsAlertBox');
+  const btn = document.getElementById('btnDetectGPS');
+
+  if (!navigator.geolocation) {
+    showAlert("ഈ ബ്രൗസറിൽ GPS ജിയോലൊക്കേഷൻ ലഭ്യമല്ല. ദയവായി മാപ്പിൽ ക്ലിക്ക് ചെയ്തു സ്ഥാനം അടയാളപ്പെടുത്തുക.", "error");
+    return;
+  }
+
+  showAlert("GPS വഴി നിലവിലെ സ്ഥാനം തിരയുന്നു...", "info");
+  btn.disabled = true;
+
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      btn.disabled = false;
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      showAlert("GPS ലൊക്കേഷൻ വിജയകരമായി കണ്ടെത്തി!", "success");
+      updateUserCoordinates(lat, lng);
+    },
+    function(err) {
+      btn.disabled = false;
+      let msg = "ലൊക്കേഷൻ കണ്ടെത്താൻ കഴിഞ്ഞില്ല.";
+      if (err.code === 1) {
+        msg = "ബ്രൗസറിൽ ലൊക്കേഷൻ പെർമിഷൻ നിരസിക്കപ്പെട്ടു. മാപ്പിൽ ക്ലിക്ക് ചെയ്ത് മാനുവലായി ലൊക്കേഷൻ സെലക്ട് ചെയ്യാം.";
+      }
+      showAlert(msg, "warning");
+    },
+    { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
+  );
+}
+
+async function updateUserCoordinates(lat, lng) {
+  currentUserLat = lat;
+  currentUserLng = lng;
+
+  updateUserMarker(lat, lng);
+  map.setView([lat, lng], 13);
+
+  // Save coordinates to backend user location
+  try {
+    await fetch('/api/v1/auth/location/update/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify({ latitude: lat, longitude: lng })
+    });
+  } catch (e) {
+    console.error("Save location error:", e);
+  }
+
+  loadNearbyFriends(lat, lng, currentRadiusKm);
+}
+
+function updateUserMarker(lat, lng) {
+  if (userMarker) map.removeLayer(userMarker);
+  if (radiusCircle) map.removeLayer(radiusCircle);
+
+  // Pulsing circle marker for user
+  const userIcon = L.divIcon({
+    className: 'user-pulse-marker',
+    iconSize: [18, 18],
+    iconAnchor: [9, 9]
+  });
+
+  userMarker = L.marker([lat, lng], { icon: userIcon }).addTo(map);
+  userMarker.bindPopup("<div class='p-1 text-center font-bold text-xs'>📍 നിങ്ങൾ ഇവിടെയാണ് (Your Location)</div>").openPopup();
+
+  // Circle overlay representing selected radius
+  radiusCircle = L.circle([lat, lng], {
+    color: '#059669',
+    fillColor: '#10b981',
+    fillOpacity: 0.1,
+    radius: currentRadiusKm * 1000
+  }).addTo(map);
+}
+
+function setRadius(r) {
+  currentRadiusKm = r;
+  document.querySelectorAll('.radius-btn').forEach(b => {
+    b.classList.remove('bg-emerald-600', 'text-white', 'shadow');
+    b.classList.add('bg-slate-700/80', 'text-slate-300');
+  });
+  const activeBtn = document.getElementById(`radiusBtn-${r}`);
+  if (activeBtn) {
+    activeBtn.classList.remove('bg-slate-700/80', 'text-slate-300');
+    activeBtn.classList.add('bg-emerald-600', 'text-white', 'shadow');
+  }
+
+  if (currentUserLat && currentUserLng) {
+    updateUserMarker(currentUserLat, currentUserLng);
+    loadNearbyFriends(currentUserLat, currentUserLng, r);
+  }
+}
+
+async function loadNearbyFriends(lat, lng, radius) {
+  const container = document.getElementById('friendsListContainer');
+  const countBadge = document.getElementById('friendsCountBadge');
+
+  // Clear existing friend markers
+  friendMarkers.forEach(m => map.removeLayer(m));
+  friendMarkers = [];
+
+  container.innerHTML = '<div class="p-6 text-center text-slate-400 text-xs">സുഹൃത്തുക്കളെ തിരയുന്നു...</div>';
+
+  try {
+    const res = await fetch(`/api/v1/chat/friends/nearby/?lat=${lat}&lng=${lng}&radius=${radius}`);
+    if (!res.ok) {
+      container.innerHTML = '<div class="p-6 text-center text-slate-400 text-xs">ഡാറ്റ ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല.</div>';
+      return;
+    }
+
+    const data = await res.json();
+    const friends = data.friends || [];
+    countBadge.innerText = `${friends.length} പേർ`;
+
+    if (friends.length === 0) {
+      container.innerHTML = `
+        <div class="p-6 text-center text-slate-400 text-xs">
+          <span class="text-3xl block mb-2">📍</span>
+          <p class="font-bold text-slate-700">${radius} km ചുറ്റളവിൽ സുഹൃത്തുക്കൾ ആരും ലൊക്കേഷൻ ഷെയർ ചെയ്തിട്ടില്ല.</p>
+          <p class="mt-1">മുകളിലെ റേഡിയസ് കൂട്ടുകയോ കൂടുതൽ സുഹൃത്തുക്കളെ ക്ഷണിക്കുകയോ ചെയ്യാം.</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = '';
+
+    friends.forEach(f => {
+      // 1. Add Leaflet map marker
+      const friendIcon = L.divIcon({
+        className: 'custom-friend-pin',
+        html: `
+          <div style="background-color: #047857; color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; border: 2.5px solid white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
+            ${f.full_name ? f.full_name.charAt(0).toUpperCase() : 'F'}
+          </div>
+        `,
+        iconSize: [34, 34],
+        iconAnchor: [17, 17]
+      });
+
+      const popupHtml = `
+        <div class="p-2 space-y-2 min-w-[190px]">
+          <div class="flex items-center space-x-2">
+            <div class="w-8 h-8 rounded-full bg-emerald-700 text-white font-black text-xs flex items-center justify-center">
+              ${f.full_name.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <h4 class="font-extrabold text-sm text-slate-900 leading-tight">${f.full_name}</h4>
+              <p class="text-[10px] text-slate-500">${f.area_name || 'കേരളം'}</p>
+            </div>
+          </div>
+          <div class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-lg">
+            📏 ദൂരം: ${f.distance_km} km
+            ${f.precision === 'approximate' ? '<span class="text-slate-400 font-normal block text-[9px]">(ഏകദേശ സ്ഥലം)</span>' : ''}
+          </div>
+          <div class="pt-1">
+            <a href="${f.chat_url}" class="block w-full py-1.5 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs text-center shadow-sm">
+              💬 ചാറ്റ് ചെയ്യാം
+            </a>
+          </div>
+        </div>
+      `;
+
+      const m = L.marker([f.latitude, f.longitude], { icon: friendIcon }).addTo(map).bindPopup(popupHtml);
+      friendMarkers.push(m);
+
+      // 2. Add Sidebar list item
+      const card = document.createElement('div');
+      card.className = 'p-3 rounded-2xl border border-slate-100 bg-slate-50/70 hover:bg-emerald-50/60 transition flex items-center justify-between cursor-pointer';
+      card.onclick = function() {
+        map.setView([f.latitude, f.longitude], 15);
+        m.openPopup();
+      };
+
+      card.innerHTML = `
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-800 text-white font-black text-sm flex items-center justify-center shadow-sm">
+            ${f.full_name.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <h4 class="font-black text-xs text-slate-900">${f.full_name}</h4>
+            <p class="text-[11px] font-bold text-emerald-700 mt-0.5">📏 ${f.distance_km} km അകലെ</p>
+            <p class="text-[10px] text-slate-400">${f.last_updated}</p>
+          </div>
+        </div>
+        <a href="${f.chat_url}" class="p-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-sm transition" title="ചാറ്റ് ചെയ്യാം">
+          💬
+        </a>
+      `;
+
+      container.appendChild(card);
+    });
+
+  } catch (e) {
+    console.error("Load nearby friends error:", e);
+    container.innerHTML = '<div class="p-6 text-center text-rose-500 text-xs">കണക്ഷൻ തകരാർ. വീണ്ടും ശ്രമിക്കുക.</div>';
+  }
+}
+
+function showAlert(msg, type) {
+  const box = document.getElementById('gpsAlertBox');
+  box.classList.remove('hidden', 'bg-emerald-500/20', 'text-emerald-200', 'bg-amber-500/20', 'text-amber-200', 'bg-rose-500/20', 'text-rose-200');
+
+  if (type === 'success') {
+    box.classList.add('bg-emerald-500/20', 'text-emerald-200');
+  } else if (type === 'error') {
+    box.classList.add('bg-rose-500/20', 'text-rose-200');
+  } else {
+    box.classList.add('bg-amber-500/20', 'text-amber-200');
+  }
+
+  box.innerText = msg;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}പ്രവർത്തന സമയം ക്രമീകരിക്കുക - {{ shop.name }} - എന്റെ നാട്{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+  <!-- Breadcrumbs & Header -->
+  <div class="mb-8">
+    <div class="flex items-center space-x-2 text-xs font-bold text-slate-500 mb-2">
+      <a href="{% url 'shop-dashboard' %}" class="hover:text-emerald-700">ഷോപ്പ് ഡാഷ്‌ബോർഡ്</a>
+      <span>/</span>
+      <a href="{% url 'shop-detail' shop.id %}" class="hover:text-emerald-700">{{ shop.name }}</a>
+      <span>/</span>
+      <span class="text-slate-800">പ്രവർത്തന സമയം</span>
+    </div>
+
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center space-x-2">
+          <span>⏰</span>
+          <span>പ്രവർത്തന സമയം ക്രമീകരിക്കുക (Shop Working Hours)</span>
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-500 mt-1">
+          കടയുടെ 7 ദിവസത്തെ സമയക്രമം നിശ്ചയിക്കാം. നിലവിലെ സമയം പരിശോധിച്ച് കസ്റ്റമർമാർക്ക് കട തുറന്നിട്ടുണ്ടോ അടച്ചിട്ടുണ്ടോ എന്ന് സ്വയമേവ കാണിക്കും.
+        </p>
+      </div>
+
+      <div class="flex items-center space-x-2 self-start sm:self-auto">
+        <a href="{% url 'shop-dashboard' %}#shopOrdersSection" class="btn-premium px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-extrabold transition flex items-center space-x-1.5 shadow-sm">
+          <span>📦</span>
+          <span>ഓർഡറുകൾ</span>
+        </a>
+        <a href="{% url 'shop-dashboard' %}" class="btn-premium px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center space-x-1.5">
+          <span>←</span>
+          <span>ഡാഷ്‌ബോർഡിലേക്ക്</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form for Working Hours & Emergency Temporary Close -->
+  <form action="{% url 'shop-hours-edit' shop.id %}" method="POST" class="space-y-6">
+    {% csrf_token %}
+
+    <!-- Emergency / Temporary Close Box -->
+    <div class="p-5 sm:p-6 rounded-3xl bg-white border border-rose-200 shadow-sm space-y-4">
+      <div class="flex items-start space-x-3.5">
+        <div class="p-2.5 rounded-2xl bg-rose-50 text-rose-600 text-xl flex-shrink-0">
+          ⚠️
+        </div>
+        <div class="flex-1">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 class="text-sm sm:text-base font-extrabold text-slate-900">
+                താൽക്കാലികമായി കട അടച്ചിടുക (Emergency / Temporarily Closed)
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">
+                അടിയന്തിര കാരണങ്ങളാലോ അറ്റകുറ്റപ്പണിക്കോ വേണ്ടി കട അടച്ചിടാൻ ഇത് ഉപയോഗിക്കാം. ഇത് ഓൺ ആക്കുമ്പോൾ ഷെഡ്യൂൾ പ്രകാരമുള്ള സമയം വന്നാലും കട അടച്ചതായി (CLOSED) കാണിക്കും.
+              </p>
+            </div>
+
+            <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+              <input
+                type="checkbox"
+                name="is_temporarily_closed"
+                id="isTemporarilyClosedToggle"
+                class="sr-only peer"
+                {% if is_temporarily_closed %}checked{% endif %}
+                onchange="toggleTempCloseReason(this)"
+              >
+              <div class="w-12 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-600"></div>
+            </label>
+          </div>
+
+          <div id="tempReasonContainer" class="mt-4 {% if not is_temporarily_closed %}hidden{% endif %}">
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              അടച്ചിടാനുള്ള കാരണം (കസ്റ്റമർമാർക്ക് കാണാൻ, ഉദാഹരണത്തിന്: അറ്റകുറ്റപ്പണി നടക്കുന്നു / സ്വകാര്യ ആവശ്യം):
+            </label>
+            <input
+              type="text"
+              name="temporary_close_reason"
+              value="{{ temporary_close_reason|default:'' }}"
+              placeholder="കാരണം നൽകുക (ഓപ്ഷണൽ)..."
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-rose-500 focus:outline-none"
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7-Day Weekly Schedule Card -->
+    <div class="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-6">
+
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+        <div>
+          <h2 class="text-base sm:text-lg font-black text-slate-900 flex items-center space-x-2">
+            <span>📅</span>
+            <span>പ്രതിവാര പ്രവർത്തന സമയം (Weekly Schedule)</span>
+          </h2>
+          <p class="text-xs text-slate-500 mt-0.5">
+            ഓരോ ദിവസത്തെയും തുറക്കുന്ന സമയവും അടയ്ക്കുന്ന സമയവും വ്യത്യസ്തമായി ക്രമീകരിക്കാം.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onclick="copyMondayHoursToAll()"
+          class="btn-premium px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-200 transition self-start sm:self-auto flex items-center space-x-1.5"
+          title="തിങ്കളാഴ്ചയിലെ സമയം ചൊവ്വ മുതൽ ശനി വരെയുള്ള ദിവസങ്ങളിലേക്ക് പകർത്തുക"
+        >
+          <span>📋</span>
+          <span>തിങ്കളിലെ സമയം മറ്റ് ദിവസങ്ങളിലേക്ക് പകർത്തുക</span>
+        </button>
+      </div>
+
+      <!-- Schedule Rows -->
+      <div class="space-y-4">
+        {% for d in days_data %}
+        <div class="p-4 rounded-2xl border transition-all {% if d.is_closed %}bg-slate-50/80 border-slate-200{% else %}bg-white border-slate-200 hover:border-emerald-300 shadow-2xs{% endif %}" id="dayRow_{{ d.day }}">
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 items-center">
+
+            <!-- Day Name -->
+            <div class="md:col-span-3 flex items-center justify-between md:justify-start space-x-2">
+              <span class="text-sm font-extrabold text-slate-900">
+                {{ d.name_ml }}
+              </span>
+              {% if d.day == 6 %}
+              <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-200 md:hidden">
+                ഞായർ
+              </span>
+              {% endif %}
+            </div>
+
+            <!-- Closed Checkbox -->
+            <div class="md:col-span-3 flex items-center space-x-2">
+              <label class="inline-flex items-center space-x-2 text-xs font-bold cursor-pointer text-slate-700">
+                <input
+                  type="checkbox"
+                  name="closed_{{ d.day }}"
+                  id="closed_{{ d.day }}"
+                  class="rounded text-rose-600 focus:ring-rose-500 h-4 w-4 border-slate-300"
+                  {% if d.is_closed %}checked{% endif %}
+                  onchange="handleClosedCheckbox(this, {{ d.day }})"
+                >
+                <span class="{% if d.is_closed %}text-rose-600 font-black{% endif %}" id="closedLabel_{{ d.day }}">
+                  അവധിദിനം (Closed)
+                </span>
+              </label>
+            </div>
+
+            <!-- Opening Time -->
+            <div class="md:col-span-3 flex items-center space-x-2" id="openContainer_{{ d.day }}">
+              <span class="text-xs font-semibold text-slate-500 w-16 md:w-auto">തുറക്കുന്നത്:</span>
+              <input
+                type="time"
+                name="open_time_{{ d.day }}"
+                id="open_time_{{ d.day }}"
+                value="{{ d.opening_time }}"
+                class="flex-1 px-3 py-1.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-400"
+                {% if d.is_closed %}disabled{% endif %}
+              >
+            </div>
+
+            <!-- Closing Time -->
+            <div class="md:col-span-3 flex items-center space-x-2" id="closeContainer_{{ d.day }}">
+              <span class="text-xs font-semibold text-slate-500 w-16 md:w-auto">അടയ്ക്കുന്നത്:</span>
+              <input
+                type="time"
+                name="close_time_{{ d.day }}"
+                id="close_time_{{ d.day }}"
+                value="{{ d.closing_time }}"
+                class="flex-1 px-3 py-1.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-400"
+                {% if d.is_closed %}disabled{% endif %}
+              >
+            </div>
+
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Live Calculation Info Banner -->
+      <div class="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200 text-emerald-950 text-xs flex items-start space-x-3">
+        <span class="text-lg">ℹ️</span>
+        <div class="space-y-1">
+          <strong class="font-extrabold block text-emerald-900">തത്സമയ സ്റ്റാറ്റസ് കണക്കുകൂട്ടൽ (Real-time IST Calculation):</strong>
+          <p class="text-emerald-800 leading-relaxed">
+            ഇന്ത്യൻ സ്റ്റാൻഡേർഡ് സമയം (Asia/Kolkata) അനുസരിച്ചാണ് ഓരോ നിമിഷവും കടയുടെ സ്റ്റാറ്റസ് ഓട്ടോമാറ്റിക് ആയി കണക്കാക്കുന്നത്. തുറക്കുന്ന സമയം എത്തിയാൽ <span class="font-black text-emerald-700">OPEN NOW</span> എന്നും, സമയം കഴിഞ്ഞാൽ <span class="font-black text-rose-700">CLOSED NOW</span> എന്നും, അവധിദിനങ്ങളിൽ <span class="font-black text-amber-700">CLOSED TODAY</span> എന്നും തനിയെ മാറും.
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex items-center justify-end space-x-3 pt-2">
+      <a href="{% url 'shop-dashboard' %}" class="px-5 py-3 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold transition">
+        റദ്ദാക്കുക (Cancel)
+      </a>
+      <button
+        type="submit"
+        class="btn-premium px-7 py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs sm:text-sm font-extrabold shadow-md transition flex items-center space-x-2"
+      >
+        <span>✓</span>
+        <span>പ്രവർത്തന സമയം സേവ് ചെയ്യുക</span>
+      </button>
+    </div>
+
+  </form>
+
+</div>
+
+<script>
+  function toggleTempCloseReason(checkbox) {
+    var container = document.getElementById('tempReasonContainer');
+    if (!container) return;
+    if (checkbox.checked) {
+      container.classList.remove('hidden');
+    } else {
+      container.classList.add('hidden');
+    }
+  }
+
+  function handleClosedCheckbox(checkbox, dayIdx) {
+    var openInput = document.getElementById('open_time_' + dayIdx);
+    var closeInput = document.getElementById('close_time_' + dayIdx);
+    var row = document.getElementById('dayRow_' + dayIdx);
+    var label = document.getElementById('closedLabel_' + dayIdx);
+
+    if (checkbox.checked) {
+      if (openInput) openInput.disabled = true;
+      if (closeInput) closeInput.disabled = true;
+      if (row) {
+        row.classList.add('bg-slate-50/80');
+        row.classList.remove('bg-white');
+      }
+      if (label) {
+        label.classList.add('text-rose-600', 'font-black');
+      }
+    } else {
+      if (openInput) openInput.disabled = false;
+      if (closeInput) closeInput.disabled = false;
+      if (row) {
+        row.classList.remove('bg-slate-50/80');
+        row.classList.add('bg-white');
+      }
+      if (label) {
+        label.classList.remove('text-rose-600', 'font-black');
+      }
+    }
+  }
+
+  function copyMondayHoursToAll() {
+    var monOpen = document.getElementById('open_time_0');
+    var monClose = document.getElementById('close_time_0');
+    var monClosed = document.getElementById('closed_0');
+
+    if (!monOpen || !monClose) return;
+
+    var openVal = monOpen.value;
+    var closeVal = monClose.value;
+    var isClosedVal = monClosed ? monClosed.checked : false;
+
+    // Apply to Tuesday (1) through Saturday (5)
+    for (var i = 1; i <= 5; i++) {
+      var o = document.getElementById('open_time_' + i);
+      var c = document.getElementById('close_time_' + i);
+      var cb = document.getElementById('closed_' + i);
+
+      if (o && !isClosedVal) o.value = openVal;
+      if (c && !isClosedVal) c.value = closeVal;
+      if (cb) {
+        cb.checked = isClosedVal;
+        handleClosedCheckbox(cb, i);
+      }
+    }
+
+    alert('തിങ്കളാഴ്ചയിലെ സമയം ചൊവ്വ മുതൽ ശനി വരെയുള്ള ദിവസങ്ങളിലേക്ക് പകർത്തി.');
+  }
+</script>
+{% endblock %}

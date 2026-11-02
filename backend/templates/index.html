@@ -1,0 +1,464 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}എന്റെ നാട് - നാട്ടിലെ ഡിജിറ്റൽ കൂട്ടായ്മ (Ente Naadu){% endblock %}
+
+{% block content %}
+
+<!-- ==========================================================================
+     HERO SECTION: 3D KERALA COMMUNITY BANNER WITH LIVE SEARCH & METRICS
+     ========================================================================== -->
+<section class="relative overflow-hidden bg-gradient-to-b from-emerald-800 via-emerald-900 to-slate-900 text-white pt-12 pb-20 sm:pt-20 sm:pb-32">
+
+  <!-- Ambient 3D Glow Blobs (GPU accelerated) -->
+  <div class="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none -translate-y-1/2"></div>
+  <div class="absolute bottom-0 right-10 w-80 h-80 bg-amber-400/10 rounded-full blur-3xl pointer-events-none translate-y-1/3"></div>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+
+      <!-- Left Column: Hero Text & Search Bar -->
+      <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+
+        <!-- Live Village Status Tag -->
+        <div class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-emerald-700/60 border border-emerald-500/40 text-emerald-200 text-xs font-bold backdrop-blur-md shadow-sm">
+          <span class="live-pulse h-2 w-2 rounded-full bg-emerald-400"></span>
+          <span>നമ്മുടെ ഗ്രാമം ഡിജിറ്റലായി ബന്ധിപ്പിച്ചിരിക്കുന്നു</span>
+        </div>
+
+        <!-- Main Headline -->
+        <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight sm:leading-none">
+          നമ്മുടെ നാട്, <br class="hidden sm:inline">
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 via-emerald-100 to-amber-300">നമ്മുടെ സ്വന്തം കടകൾ</span>, <br>
+          ഒരൊറ്റ പ്ലാറ്റ്‌ഫോമിൽ.
+        </h1>
+
+        <p class="text-sm sm:text-base text-emerald-100/90 max-w-2xl mx-auto lg:mx-0 font-medium leading-relaxed">
+          നാട്ടിലെ ഹോട്ടലുകൾ, പലചരക്കുകടകൾ, സേവന സ്ഥാപനങ്ങൾ, അടിയന്തര അറിയിപ്പുകൾ, രക്തദാതാക്കൾ എന്നിവ ഇനി വിരൽത്തുമ്പിൽ. 100% സൗജന്യ കമ്മ്യൂണിറ്റി സേവനം.
+        </p>
+
+        <!-- Live Instant Search Bar -->
+        <form action="{% url 'shop-list' %}" method="GET" class="max-w-xl mx-auto lg:mx-0 pt-2">
+          <div class="relative flex items-center bg-white/95 rounded-2xl p-1.5 shadow-2xl shadow-emerald-950/40 border border-white/20 focus-within:ring-4 focus-within:ring-emerald-400/40 transition">
+            <span class="pl-3.5 text-slate-400 text-lg">🔍</span>
+            <input
+              type="text"
+              name="q"
+              placeholder="കടയുടെ പേര്, വിഭവം, സേവനം തിരയുക (ഉദാ: ഊണ്, ചായ, മെഡിക്കൽ)..."
+              class="w-full px-3 py-3 text-slate-800 text-xs sm:text-sm bg-transparent focus:outline-none font-medium placeholder-slate-400"
+            >
+            <button type="submit" class="btn-premium px-5 py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs sm:text-sm shadow-md transition flex-shrink-0">
+              തിരയുക
+            </button>
+          </div>
+        </form>
+
+        <!-- Quick Tag Shortcuts -->
+        <div class="flex flex-wrap items-center justify-center lg:justify-start gap-2 pt-2 text-xs text-emerald-200 font-semibold">
+          <span class="text-emerald-300/80">ജനപ്രിയ വിഭാഗങ്ങൾ:</span>
+          <a href="{% url 'shop-list' %}?q=ഹോട്ടൽ" class="px-2.5 py-1 rounded-lg bg-emerald-800/60 hover:bg-emerald-700 border border-emerald-600/40 transition">🍛 ഹോട്ടൽ</a>
+          <a href="{% url 'shop-list' %}?q=പലചരക്ക്" class="px-2.5 py-1 rounded-lg bg-emerald-800/60 hover:bg-emerald-700 border border-emerald-600/40 transition">🛒 പലചരക്ക്</a>
+          <a href="{% url 'shop-list' %}?q=മെഡിക്കൽ" class="px-2.5 py-1 rounded-lg bg-emerald-800/60 hover:bg-emerald-700 border border-emerald-600/40 transition">💊 മെഡിക്കൽ</a>
+          <a href="{% url 'shop-list' %}?q=അക്ഷയ" class="px-2.5 py-1 rounded-lg bg-emerald-800/60 hover:bg-emerald-700 border border-emerald-600/40 transition">🏛️ അക്ഷയ</a>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Interactive 3D Feature Card Cluster -->
+      <div class="lg:col-span-5 perspective-container">
+        <div class="card-3d bg-gradient-to-br from-emerald-800/90 to-slate-900/95 rounded-3xl p-6 sm:p-8 border border-emerald-500/30 shadow-2xl backdrop-blur-xl relative">
+          <div class="card-3d-glare"></div>
+
+          <div class="flex items-center justify-between border-b border-emerald-700/50 pb-4 mb-6">
+            <div class="flex items-center space-x-2.5">
+              <span class="text-2xl">📊</span>
+              <div>
+                <h3 class="font-extrabold text-sm sm:text-base text-white">നാട്ടിലെ തത്സമയ സ്ഥിതിവിവരം</h3>
+                <p class="text-[11px] text-emerald-300">Live Community Metrics</p>
+              </div>
+            </div>
+            <span class="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 rounded-full border border-emerald-400/30">
+              തത്സമയം
+            </span>
+          </div>
+
+          <!-- 4 Grid Stat Counters with animated counting -->
+          <div class="grid grid-cols-2 gap-4">
+
+            <div class="p-4 rounded-2xl bg-emerald-950/60 border border-emerald-700/40">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs text-emerald-300 font-bold">രജിസ്റ്റർ ചെയ്ത കടകൾ</span>
+                <span class="text-base">🏪</span>
+              </div>
+              <div class="text-2xl sm:text-3xl font-black text-white" data-count="{{ total_shops }}">
+                {{ total_shops }}
+              </div>
+              <p class="text-[10px] text-emerald-400/80 mt-1">പരിശോധിച്ച സ്ഥാപനങ്ങൾ</p>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-emerald-950/60 border border-emerald-700/40">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs text-emerald-300 font-bold">ഇപ്പോൾ തുറന്നവ</span>
+                <span class="text-base">🟢</span>
+              </div>
+              <div class="text-2xl sm:text-3xl font-black text-emerald-400" data-count="{{ open_shops }}">
+                {{ open_shops }}
+              </div>
+              <p class="text-[10px] text-emerald-400/80 mt-1">ഓർഡറുകൾ സ്വീകരിക്കുന്നു</p>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-emerald-950/60 border border-emerald-700/40">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs text-emerald-300 font-bold">രക്തദാതാക്കൾ</span>
+                <span class="text-base">🩸</span>
+              </div>
+              <div class="text-2xl sm:text-3xl font-black text-rose-400" data-count="{{ blood_donors_count }}">
+                {{ blood_donors_count }}
+              </div>
+              <p class="text-[10px] text-rose-300/80 mt-1">അടിയന്തിര സന്നദ്ധസേവകർ</p>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-emerald-950/60 border border-emerald-700/40">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs text-emerald-300 font-bold">സേവനങ്ങൾ</span>
+                <span class="text-base">⚡</span>
+              </div>
+              <div class="text-2xl sm:text-3xl font-black text-amber-300" data-count="24">
+                24+
+              </div>
+              <p class="text-[10px] text-amber-300/80 mt-1">ഇലക്ട്രീഷ്യൻ, പ്ലംബർ...</p>
+            </div>
+
+          </div>
+
+          <!-- Floating Micro Badges -->
+          <div class="mt-6 pt-5 border-t border-emerald-700/50 flex items-center justify-between text-xs text-emerald-200">
+            <span class="flex items-center space-x-1.5">
+              <span>🛡️</span>
+              <span>100% വെരിഫൈഡ് കമ്മ്യൂണിറ്റി</span>
+            </span>
+            <span class="flex items-center space-x-1.5">
+              <span>⚡</span>
+              <span>₹0 കമ്മീഷൻ</span>
+            </span>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ==========================================================================
+     SECTION: EMERGENCY & COMMUNITY ANNOUNCEMENTS
+     ========================================================================== -->
+<section id="alerts" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-20">
+  {% if emergency_alerts %}
+  <div class="mb-6 space-y-3">
+    {% for alert in emergency_alerts %}
+    <div class="reveal-on-scroll card-3d p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-rose-900/90 via-rose-800 to-slate-900 text-white shadow-xl border border-rose-500/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div class="flex items-start space-x-3.5">
+        <div class="w-10 h-10 rounded-xl bg-rose-500/30 border border-rose-400/50 flex items-center justify-center text-xl flex-shrink-0 animate-bounce">
+          🚨
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-rose-500 text-white">അടിയന്തിര അറിയിപ്പ്</span>
+            <span class="text-xs text-rose-200">{{ alert.created_at|date:"d M Y, h:i A" }}</span>
+          </div>
+          <h3 class="font-extrabold text-base sm:text-lg text-white mt-1">{{ alert.title }}</h3>
+          <p class="text-xs sm:text-sm text-rose-100/90 mt-0.5">{{ alert.description }}</p>
+        </div>
+      </div>
+      {% if alert.venue %}
+      <div class="px-3 py-1.5 rounded-xl bg-rose-950/80 border border-rose-700/60 text-xs text-rose-200 flex-shrink-0">
+        📍 {{ alert.venue }}
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Community Circulars Bar -->
+  {% if latest_events %}
+  <div class="p-4 sm:p-5 rounded-2xl bg-white shadow-lg border border-slate-200/80 reveal-on-scroll">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center space-x-2.5">
+        <span class="text-xl">📢</span>
+        <h3 class="font-bold text-slate-900 text-sm sm:text-base">നാട്ടിലെ പുതിയ പരിപാടികളും അറിയിപ്പുകളും</h3>
+      </div>
+      <span class="text-xs text-slate-500 font-medium">വാർഡ് & പഞ്ചായത്ത് വിവരങ്ങൾ</span>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      {% for ev in latest_events %}
+      <div class="p-3.5 rounded-xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200/60 hover:border-emerald-300 transition duration-200 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between text-[11px] mb-1.5">
+            <span class="px-2 py-0.5 rounded-md font-bold bg-emerald-100 text-emerald-800">{{ ev.get_category_display }}</span>
+            <span class="text-slate-500">{{ ev.created_at|date:"d M Y" }}</span>
+          </div>
+          <h4 class="font-bold text-xs sm:text-sm text-slate-900 line-clamp-1">{{ ev.title }}</h4>
+          <p class="text-xs text-slate-600 mt-1 line-clamp-2">{{ ev.description }}</p>
+        </div>
+        {% if ev.venue or ev.event_date %}
+        <div class="mt-3 pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px] text-slate-500 font-medium">
+          <span>📍 {{ ev.venue|default:"നാട്ടിൽ" }}</span>
+          {% if ev.event_date %}<span>📅 {{ ev.event_date|date:"d M" }}</span>{% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</section>
+
+
+<!-- ==========================================================================
+     SECTION: SHOP CATEGORIES (3D INTERACTIVE CARDS)
+     ========================================================================== -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+  <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-3">
+    <div>
+      <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-md">വിഭാഗങ്ങൾ</span>
+      <h2 class="text-2xl sm:text-3xl font-black text-slate-900 mt-2">എന്താണ് നിങ്ങൾ തിരയുന്നത്?</h2>
+      <p class="text-xs sm:text-sm text-slate-500 mt-1">ഭക്ഷണ സാധനങ്ങൾ, സേവനങ്ങൾ, അപ്പോയിൻ്റ്മെന്റുകൾ എന്നിവ എളുപ്പത്തിൽ കണ്ടെത്താം</p>
+    </div>
+    <a href="{% url 'shop-list' %}" class="btn-premium px-4 py-2 rounded-xl text-xs sm:text-sm bg-slate-900 hover:bg-slate-800 text-white font-bold transition flex items-center space-x-1.5 self-start sm:self-auto">
+      <span>എല്ലാ കടകളും കാണാം</span>
+      <span>&rarr;</span>
+    </a>
+  </div>
+
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 perspective-container">
+    {% for cat in categories %}
+    <a href="{% url 'shop-list' %}?category={{ cat.id }}" class="card-3d p-4 rounded-2xl bg-white hover:bg-emerald-50/70 border border-slate-200/80 hover:border-emerald-400 shadow-sm hover:shadow-md transition text-center group block">
+      <div class="w-12 h-12 mx-auto rounded-2xl bg-emerald-100 group-hover:bg-emerald-600 group-hover:text-white flex items-center justify-center text-2xl transition duration-200 mb-2.5">
+        {% if 'ഹോട്ടൽ' in cat.name or 'ഭക്ഷണം' in cat.name %}🍛
+        {% elif 'പലചരക്ക്' in cat.name or 'ബേക്കറി' in cat.name %}🛒
+        {% elif 'മെഡിക്കൽ' in cat.name %}💊
+        {% elif 'ബാർബർ' in cat.name %}✂️
+        {% elif 'ടെയ്‌ലർ' in cat.name %}🧵
+        {% elif 'അക്ഷയ' in cat.name %}🏛️
+        {% elif 'ഇലക്ട്രിക്' in cat.name or 'പ്ലംബിംഗ്' in cat.name %}⚡
+        {% else %}🏪{% endif %}
+      </div>
+      <h3 class="font-extrabold text-xs sm:text-sm text-slate-800 group-hover:text-emerald-800 transition line-clamp-1">{{ cat.name }}</h3>
+      <span class="inline-block mt-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
+        {% if cat.interaction_mode == 'order' %}ഓർഡർ
+        {% elif cat.interaction_mode == 'booking' %}ബുക്കിംഗ്
+        {% else %}അന്വേഷണം{% endif %}
+      </span>
+    </a>
+    {% empty %}
+    <div class="col-span-full py-8 text-center text-slate-400 text-xs">വിഭാഗങ്ങൾ ലഭ്യമല്ല.</div>
+    {% endfor %}
+  </div>
+</section>
+
+
+<!-- ==========================================================================
+     SECTION: FEATURED LOCAL SHOPS (3D CARDS + LIVE STATUS)
+     ========================================================================== -->
+<section class="bg-slate-100/80 py-14 border-y border-slate-200/80">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-3">
+      <div>
+        <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-md">തത്സമയം</span>
+        <h2 class="text-2xl sm:text-3xl font-black text-slate-900 mt-2">നാട്ടിലെ പ്രധാന കടകൾ</h2>
+        <p class="text-xs sm:text-sm text-slate-500 mt-1">അഡ്മിൻ പരിശോധിച്ച് ഉറപ്പുവരുത്തിയ വിശ്വസനീയമായ സ്ഥാപനങ്ങൾ</p>
+      </div>
+      <a href="{% url 'shop-list' %}" class="text-xs sm:text-sm font-bold text-emerald-700 hover:text-emerald-800 underline self-start sm:self-auto">
+        മറ്റു കടകൾ തിരയുക &rarr;
+      </a>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 perspective-container">
+      {% for shop in recent_shops %}
+      <div class="card-3d bg-white rounded-3xl p-5 border border-slate-200 shadow-sm hover:shadow-xl transition flex flex-col justify-between">
+        <div class="card-3d-glare"></div>
+
+        <div>
+          <!-- Header of card: Live Open Badge & Verified Tag -->
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-bold px-2.5 py-1 rounded-full {% if shop.is_open %}bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center space-x-1.5{% else %}bg-slate-100 text-slate-600 border border-slate-300{% endif %}">
+              {% if shop.is_open %}
+              <span class="live-pulse h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
+              <span>തുറന്നിരിക്കുന്നു</span>
+              {% else %}
+              <span>ഇപ്പോൾ അടച്ചു</span>
+              {% endif %}
+            </span>
+
+            <span class="text-[11px] font-bold text-slate-500 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200">
+              വാർഡ് {{ shop.ward_number }}
+            </span>
+          </div>
+
+          <!-- Shop Title & Category -->
+          <h3 class="font-extrabold text-base text-slate-900 line-clamp-1">{{ shop.name }}</h3>
+          <p class="text-xs text-emerald-700 font-bold mt-0.5">{{ shop.category.name|default:"ജനറൽ" }}</p>
+
+          <!-- Address -->
+          <p class="text-xs text-slate-500 mt-2 line-clamp-2 leading-relaxed">
+            📍 {{ shop.address }}
+          </p>
+
+          <!-- Today's Special Offer (if present) -->
+          {% if shop.todays_offer %}
+          <div class="mt-3 p-2.5 rounded-xl bg-amber-50 border border-amber-200/80 text-[11px] text-amber-900 font-medium">
+            🔥 <strong>ഇന്നത്തെ ഓഫർ:</strong> {{ shop.todays_offer|truncatewords:8 }}
+          </div>
+          {% endif %}
+
+          <!-- Home delivery badge -->
+          {% if shop.delivery_available %}
+          <div class="mt-2 text-[11px] text-emerald-700 font-semibold flex items-center space-x-1">
+            <span>🛵</span>
+            <span>ഹോം ഡെലിവറി ലഭ്യമാണ്</span>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mt-5 pt-4 border-t border-slate-100 flex items-center space-x-2">
+          <a href="{% url 'shop-detail' shop.id %}" class="btn-premium flex-1 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs text-center shadow-sm transition">
+            കട കാണാം
+          </a>
+          <a href="tel:{{ shop.contact_phone }}" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm transition" title="വിളിക്കുക">
+            📞
+          </a>
+          {% if shop.whatsapp_number %}
+          <a href="https://wa.me/91{{ shop.whatsapp_number }}" target="_blank" class="p-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-sm transition" title="WhatsApp">
+            💬
+          </a>
+          {% endif %}
+        </div>
+
+      </div>
+      {% empty %}
+      <div class="col-span-full py-12 text-center text-slate-400 text-sm">
+        നിലവിൽ പരിശോധിച്ച കടകൾ ലഭ്യമല്ല. വ്യാപാരികൾക്ക് മുകളിൽ "കട രജിസ്ട്രേഷൻ" വഴി സൗജന്യമായി രജിസ്റ്റർ ചെയ്യാം.
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+
+<!-- ==========================================================================
+     SECTION: LOCAL PUBLIC SERVICE DIRECTORY & EMERGENCY CONTACTS
+     ========================================================================== -->
+<section id="directory" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+  <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-3">
+    <div>
+      <span class="text-xs font-bold uppercase tracking-wider text-rose-700 bg-rose-100 px-2.5 py-1 rounded-md">ഹെൽപ്പ്‌ലൈൻ</span>
+      <h2 class="text-2xl sm:text-3xl font-black text-slate-900 mt-2">സേവന ഡയറക്ടറി</h2>
+      <p class="text-xs sm:text-sm text-slate-500 mt-1">അടിയന്തിര ഘട്ടങ്ങളിൽ ഒരു ടാപ്പിൽ നേരിട്ട് വിളിക്കാം</p>
+    </div>
+    <div>
+      {% if user.is_authenticated %}
+      <a href="{% url 'user-dashboard' %}" class="btn-premium px-3.5 py-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-extrabold text-xs shadow-sm transition inline-flex items-center space-x-1.5">
+        <span>➕</span>
+        <span>നിങ്ങളുടെ സേവനവും ചേർക്കാം</span>
+      </a>
+      {% else %}
+      <button onclick="openModal('loginModal')" class="btn-premium px-3.5 py-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-extrabold text-xs shadow-sm transition inline-flex items-center space-x-1.5">
+        <span>➕</span>
+        <span>നിങ്ങളുടെ സേവനവും ചേർക്കാം</span>
+      </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 perspective-container">
+    {% for entry in emergency_directory %}
+    <div class="card-3d p-4 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center text-xl font-bold">
+          🚑
+        </div>
+        <div>
+          <h4 class="font-extrabold text-sm text-slate-900">{{ entry.name }}</h4>
+          <p class="text-xs text-slate-500">{{ entry.get_category_display|default:"അടിയന്തര സേവനം" }}</p>
+        </div>
+      </div>
+      <a href="tel:{{ entry.phone_number }}" class="btn-premium px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs shadow-sm transition flex items-center space-x-1">
+        <span>📞</span>
+        <span>വിളിക്കാം</span>
+      </a>
+    </div>
+    {% endfor %}
+
+    {% for entry in service_directory %}
+    <div class="card-3d p-4 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-xl font-bold">
+          🔧
+        </div>
+        <div>
+          <h4 class="font-extrabold text-sm text-slate-900">{{ entry.name }}</h4>
+          <p class="text-xs text-slate-500">{{ entry.get_category_display|default:"പ്രാദേശിക സേവനം" }}</p>
+        </div>
+      </div>
+      <a href="tel:{{ entry.phone_number }}" class="btn-premium px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs shadow-sm transition flex items-center space-x-1">
+        <span>📞</span>
+        <span>വിളിക്കാം</span>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+
+<!-- ==========================================================================
+     SECTION: BLOOD DONORS QUICK CALLOUT
+     ========================================================================== -->
+<section id="blood-donors" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+  <div class="rounded-3xl bg-gradient-to-br from-rose-900 via-rose-800 to-slate-950 p-6 sm:p-10 text-white shadow-2xl relative overflow-hidden">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+
+      <div class="lg:col-span-8 space-y-3">
+        <span class="px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wider bg-rose-500/40 text-rose-200 border border-rose-400/30">
+          ജീവൻ രക്ഷാ കൂട്ടായ്മ
+        </span>
+        <h3 class="text-2xl sm:text-3xl font-black">അടിയന്തിര രക്തദാനം ആവശ്യമുണ്ടോ?</h3>
+        <p class="text-xs sm:text-sm text-rose-100/90 leading-relaxed max-w-2xl font-medium">
+          നമ്മുടെ നാട്ടിലെ സന്നദ്ധ രക്തദാതാക്കൾ സദാ സന്നദ്ധരാണ്. രക്തഗ്രൂപ്പ് അനുസരിച്ച് തിരഞ്ഞ് നേരിട്ട് ഫോണിൽ ബന്ധപ്പെടാം.
+        </p>
+
+        <div class="flex flex-wrap gap-2 pt-2">
+          {% for donor in recent_donors %}
+          <div class="px-3 py-1.5 rounded-xl bg-white/10 border border-white/20 text-xs flex items-center space-x-2">
+            <span class="font-black text-rose-300">{{ donor.get_blood_group_display }}</span>
+            <span class="text-slate-200">{{ donor.name }}</span>
+            <a href="tel:{{ donor.phone_number }}" class="text-rose-300 font-bold hover:underline">📞 വിളിക്കുക</a>
+          </div>
+          {% empty %}
+          <span class="text-xs text-rose-200">രക്തദാതാക്കളുടെ വിവരങ്ങൾ ശേഖരിച്ചുവരുന്നു.</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="lg:col-span-4 text-center lg:text-right">
+        {% if user.is_authenticated %}
+        <p class="text-xs text-rose-200 mb-2">നിങ്ങൾക്കും രക്തദാതാവായി ചേരാം</p>
+        <span class="px-4 py-2.5 rounded-xl bg-white text-rose-900 font-extrabold text-xs inline-block shadow-lg">
+          സന്നദ്ധ പ്രവർത്തകൻ
+        </span>
+        {% else %}
+        <button onclick="openModal('userRegisterModal')" class="btn-premium px-6 py-3.5 rounded-xl bg-white hover:bg-rose-50 text-rose-900 font-black text-sm shadow-xl transition">
+          രക്തദാതാവായി രജിസ്റ്റർ ചെയ്യാം
+        </button>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</section>
+
+{% endblock %}

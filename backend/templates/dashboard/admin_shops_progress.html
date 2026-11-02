@@ -1,0 +1,307 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}വ്യാപാരി പുരോഗതി നിരീക്ഷണം - അഡ്മിൻ കൺസോൾ (Admin Progress Tracking){% endblock %}
+
+{% block content %}
+
+<!-- Admin Header Banner -->
+<section class="bg-gradient-to-b from-slate-950 via-slate-900 to-emerald-950 text-white py-10 sm:py-12 border-b border-slate-800">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+
+      <div class="space-y-2">
+        <div class="flex items-center space-x-2">
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider bg-amber-400 text-slate-950">
+            📊 അഡ്മിൻ പ്രോഗ്രസ് ട്രാക്കിംഗ്
+          </span>
+          <span class="text-xs text-slate-400">തത്സമയ വിശകലനം</span>
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-black text-white">വ്യാപാരികളുടെ പുരോഗതി നിരീക്ഷണം</h1>
+        <p class="text-xs sm:text-sm text-slate-300 font-medium">
+          എല്ലാ രജിസ്റ്റർ ചെയ്ത കടകളുടെയും പ്രൊഫൈൽ, GPS, കാറ്റലോഗ്, ഓർഡർ, വെരിഫിക്കേഷൻ സ്റ്റാറ്റസ് സമഗ്രമായി നിരീക്ഷിക്കാം.
+        </p>
+      </div>
+
+      <div class="flex items-center space-x-3 self-start md:self-auto">
+        <a href="{% url 'admin-dashboard' %}" class="btn-premium px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 transition flex items-center space-x-1.5">
+          <span>←</span>
+          <span>അഡ്മിൻ ഡാഷ്ബോർഡ്</span>
+        </a>
+      </div>
+
+    </div>
+
+    <!-- Summary KPI Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 mt-8 pt-8 border-t border-slate-800 perspective-container">
+
+      <div class="card-3d p-4 rounded-2xl bg-slate-900/90 border border-slate-800 text-center">
+        <span class="text-[11px] text-slate-400 font-bold block">ആകെ കടകൾ</span>
+        <div class="text-2xl font-black text-white mt-1">{{ summary.total_shops }}</div>
+      </div>
+
+      <div class="card-3d p-4 rounded-2xl bg-slate-900/90 border border-slate-800 text-center">
+        <span class="text-[11px] text-emerald-400 font-bold block">അംഗീകൃത കടകൾ</span>
+        <div class="text-2xl font-black text-emerald-400 mt-1">{{ summary.verified_shops }}</div>
+      </div>
+
+      <div class="card-3d p-4 rounded-2xl bg-slate-900/90 border border-slate-800 text-center">
+        <span class="text-[11px] text-amber-400 font-bold block">അപ്രൂവൽ ക്യൂ</span>
+        <div class="text-2xl font-black text-amber-400 mt-1">{{ summary.unverified_shops }}</div>
+      </div>
+
+      <div class="card-3d p-4 rounded-2xl bg-slate-900/90 border border-slate-800 text-center">
+        <span class="text-[11px] text-blue-300 font-bold block">ശരാശരി പുരോഗതി</span>
+        <div class="text-2xl font-black text-blue-400 mt-1">{{ summary.average_progress }}%</div>
+      </div>
+
+      <div class="card-3d p-4 rounded-2xl bg-slate-900/90 border border-slate-800 text-center">
+        <span class="text-[11px] text-emerald-300 font-bold block">ഉയർന്ന പുരോഗതി (≥80%)</span>
+        <div class="text-2xl font-black text-emerald-400 mt-1">{{ summary.distribution.high }}</div>
+      </div>
+
+      <div class="card-3d p-4 rounded-2xl bg-slate-900/90 border border-slate-800 text-center">
+        <span class="text-[11px] text-rose-300 font-bold block">ശ്രദ്ധ വേണ്ടവ (&lt;50%)</span>
+        <div class="text-2xl font-black text-rose-400 mt-1">{{ summary.distribution.low }}</div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- Main Filter & Content Section -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+  <!-- Category Breakdown Pills -->
+  {% if summary.category_stats %}
+  <div class="mb-8">
+    <h2 class="text-xs font-black text-slate-500 uppercase tracking-wider mb-3">വിഭാഗം തിരിച്ചുള്ള ശരാശരി പുരോഗതി</h2>
+    <div class="flex flex-wrap gap-2">
+      {% for cat in summary.category_stats %}
+      <div class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center space-x-2 text-xs">
+        <span class="font-bold text-slate-800">{{ cat.category }}</span>
+        <span class="text-[11px] text-slate-400">({{ cat.count }})</span>
+        <span class="px-2 py-0.5 rounded font-black text-[10px] {% if cat.avg_progress >= 80 %}bg-emerald-100 text-emerald-900{% elif cat.avg_progress >= 50 %}bg-amber-100 text-amber-900{% else %}bg-rose-100 text-rose-900{% endif %}">
+          {{ cat.avg_progress }}%
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Filter & Search Toolbar -->
+  <div class="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-sm mb-8">
+    <form method="GET" action="{% url 'admin-shops-progress' %}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+
+      <!-- 1. Search Query -->
+      <div class="lg:col-span-2">
+        <label class="block text-xs font-extrabold text-slate-700 mb-1">കട / ഉടമസ്ഥൻ / ഫോൺ</label>
+        <div class="relative">
+          <input type="text" name="q" value="{{ search_q }}" placeholder="തിരയുക..." class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          <span class="absolute left-3 top-2.5 text-slate-400 text-xs">🔍</span>
+        </div>
+      </div>
+
+      <!-- 2. Category Filter -->
+      <div>
+        <label class="block text-xs font-extrabold text-slate-700 mb-1">വിഭാഗം (Category)</label>
+        <select name="category" class="w-full py-2 px-3 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          <option value="">എല്ലാ വിഭാഗങ്ങളും</option>
+          {% for cat in all_categories %}
+          <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- 3. Ward Filter -->
+      <div>
+        <label class="block text-xs font-extrabold text-slate-700 mb-1">വാർഡ് (Ward)</label>
+        <select name="ward" class="w-full py-2 px-3 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          <option value="">എല്ലാ വാർഡുകളും</option>
+          {% for w in all_wards %}
+          <option value="{{ w }}" {% if selected_ward == w|stringformat:"s" %}selected{% endif %}>വാർഡ് {{ w }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- 4. Progress Tier Filter -->
+      <div>
+        <label class="block text-xs font-extrabold text-slate-700 mb-1">പുരോഗതി (Progress Tier)</label>
+        <select name="tier" class="w-full py-2 px-3 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          <option value="">എല്ലാ ലെവലുകളും</option>
+          <option value="high" {% if selected_tier == 'high' %}selected{% endif %}>ഉയർന്നത് (≥80%)</option>
+          <option value="medium" {% if selected_tier == 'medium' %}selected{% endif %}>ഇടത്തരം (50-79%)</option>
+          <option value="low" {% if selected_tier == 'low' %}selected{% endif %}>കുറഞ്ഞത് (&lt;50%)</option>
+        </select>
+      </div>
+
+      <!-- 5. Verification Status & Submit -->
+      <div class="flex items-end space-x-2">
+        <div class="flex-1">
+          <label class="block text-xs font-extrabold text-slate-700 mb-1">അംഗീകാരം</label>
+          <select name="verified" class="w-full py-2 px-3 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            <option value="">എല്ലാം</option>
+            <option value="true" {% if selected_verified == 'true' %}selected{% endif %}>അംഗീകരിച്ചവ</option>
+            <option value="false" {% if selected_verified == 'false' %}selected{% endif %}>കാത്തിരിക്കുന്നവ</option>
+          </select>
+        </div>
+        <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-md transition">
+          ഫിൽട്ടർ
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Results Count Bar -->
+  <div class="flex items-center justify-between mb-4">
+    <div class="text-xs font-bold text-slate-600">
+      കണ്ടെത്തിയ കടകൾ: <span class="text-slate-900 font-extrabold">{{ total_filtered_count }}</span>
+    </div>
+    {% if search_q or selected_category or selected_ward or selected_tier or selected_verified %}
+    <a href="{% url 'admin-shops-progress' %}" class="text-xs text-rose-600 hover:underline font-bold">
+      ✕ ഫിൽട്ടറുകൾ ഒഴിവാക്കുക
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- Shops Progress List / Table -->
+  <div class="space-y-4">
+    {% for sp in shops_progress %}
+    <div class="card-3d p-6 rounded-3xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+
+        <!-- Left: Shop Meta -->
+        <div class="space-y-2 flex-1">
+          <div class="flex flex-wrap items-center gap-2">
+            <h3 class="text-lg font-black text-slate-900">{{ sp.shop_name }}</h3>
+
+            <!-- Category Badge -->
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+              {{ sp.category_name }}
+            </span>
+
+            <!-- Mode Badge -->
+            {% if sp.is_service_based %}
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-900 border border-blue-200">
+              🛠️ സർവീസ് അധിഷ്ഠിതം
+            </span>
+            {% else %}
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-200">
+              📦 ഉൽപ്പന്ന അധിഷ്ഠിതം
+            </span>
+            {% endif %}
+
+            <!-- Ward -->
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-800 text-white">
+              വാർഡ് {{ sp.ward_number }}
+            </span>
+
+            <!-- Verification -->
+            {% if sp.is_verified %}
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-100 text-emerald-900 border border-emerald-200">
+              ✓ അംഗീകൃതം
+            </span>
+            {% else %}
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-amber-100 text-amber-900 border border-amber-200">
+              ⏳ പരിശോധനയിൽ
+            </span>
+            {% endif %}
+          </div>
+
+          <!-- Owner Contact -->
+          <p class="text-xs text-slate-600">
+            ഉടമസ്ഥൻ: <span class="font-bold text-slate-900">{{ sp.owner_name }}</span>
+            • രജിസ്റ്റർ ചെയ്ത തീയതി: {{ sp.created_at|date:"d M Y" }}
+          </p>
+
+          <!-- Section Completion Badges -->
+          <div class="flex flex-wrap items-center gap-1.5 pt-1">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold {% if sp.sections.profile.percentage == 100 %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-slate-100 text-slate-500{% endif %}">
+              പ്രൊഫൈൽ: {{ sp.sections.profile.percentage }}%
+            </span>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold {% if sp.sections.location.percentage == 100 %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-rose-50 text-rose-700 border border-rose-200{% endif %}">
+              📍 GPS: {{ sp.sections.location.percentage }}%
+            </span>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold {% if sp.sections.hours.percentage == 100 %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-slate-100 text-slate-500{% endif %}">
+              ⏰ സമയം: {{ sp.sections.hours.percentage }}%
+            </span>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold {% if sp.sections.catalog.percentage >= 80 %}bg-emerald-50 text-emerald-700 border border-emerald-200{% elif sp.sections.catalog.percentage > 0 %}bg-amber-50 text-amber-700 border border-amber-200{% else %}bg-slate-100 text-slate-500{% endif %}">
+              {% if sp.is_service_based %}സേവനങ്ങൾ{% else %}ഉൽപ്പന്നങ്ങൾ{% endif %}: {{ sp.metrics.total_products }} എണ്ണം
+            </span>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold {% if sp.metrics.average_rating %}bg-amber-50 text-amber-800 border border-amber-200{% else %}bg-slate-100 text-slate-500{% endif %}">
+              ⭐ {% if sp.metrics.average_rating %}{{ sp.metrics.average_rating }}★ ({{ sp.metrics.reviews_count }}){% else %}റിവ്യൂ ഇല്ല{% endif %}
+            </span>
+          </div>
+
+          <!-- Pending Action Alerts -->
+          {% if sp.pending_actions %}
+          <div class="flex flex-wrap items-center gap-1 pt-1">
+            <span class="text-[10px] font-bold text-slate-400">ശ്രദ്ധിക്കേണ്ടവ:</span>
+            {% for act in sp.pending_actions %}
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
+              • {{ act.title }}
+            </span>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Right: Progress Meter & Action Buttons -->
+        <div class="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end justify-between gap-4 flex-shrink-0">
+
+          <!-- Percentage Indicator -->
+          <div class="text-left sm:text-right w-full sm:w-48">
+            <div class="flex items-center justify-between sm:justify-end space-x-2">
+              <span class="text-xs font-bold text-slate-500">ആകെ പുരോഗതി</span>
+              <span class="text-xl font-black {% if sp.overall_percentage >= 80 %}text-emerald-700{% elif sp.overall_percentage >= 50 %}text-amber-600{% else %}text-rose-600{% endif %}">
+                {{ sp.overall_percentage }}%
+              </span>
+            </div>
+            <!-- Progress Bar -->
+            <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden mt-1.5 border border-slate-200">
+              <div class="h-full rounded-full transition-all duration-500 {% if sp.overall_percentage >= 80 %}bg-emerald-500{% elif sp.overall_percentage >= 50 %}bg-amber-500{% else %}bg-rose-500{% endif %}" style="width: {{ sp.overall_percentage }}%;"></div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-center space-x-2 w-full sm:w-auto">
+            <a href="{% url 'shop-progress-detail' sp.shop_id %}" class="btn-premium px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs shadow-sm transition">
+              വിശദാംശങ്ങൾ
+            </a>
+
+            {% if not sp.is_verified %}
+            <form action="{% url 'admin-verify-shop' sp.shop_id %}" method="POST">
+              {% csrf_token %}
+              <button type="submit" class="btn-premium px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs shadow-sm transition">
+                ✓ അപ്രൂവ്
+              </button>
+            </form>
+            {% endif %}
+
+            <a href="{% url 'shop-detail' sp.shop_id %}" target="_blank" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
+              വ്യൂ ↗
+            </a>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+    {% empty %}
+    <div class="p-12 rounded-3xl bg-white border border-slate-200 text-center space-y-3">
+      <div class="text-4xl">🔍</div>
+      <h3 class="text-base font-bold text-slate-800">നിങ്ങൾ തിരഞ്ഞ മാനദണ്ഡങ്ങൾക്ക് അനുസരിച്ചുള്ള കടകൾ ഒന്നും കണ്ടെത്തിയില്ല</h3>
+      <p class="text-xs text-slate-500">മറ്റ് ഫിൽട്ടറുകൾ ഉപയോഗിച്ച് വീണ്ടും തിരയുക.</p>
+      <a href="{% url 'admin-shops-progress' %}" class="inline-block px-4 py-2 rounded-xl bg-emerald-700 text-white font-bold text-xs">
+        എല്ലാ കടകളും കാണിക്കുക
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+
+</section>
+
+{% endblock %}
