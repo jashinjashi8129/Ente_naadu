@@ -1,0 +1,12 @@
+# ==============================================================================
+# Ente Naadu Android Release Keystore Configuration Template
+# ==============================================================================
+# 1. Generate release keystore using keytool:
+#    keytool -genkey -v -keystore mobile/android/app/entenaadu-release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias entenaadu
+# 2. Copy this file to mobile/android/key.properties (do NOT commit key.properties to Git)
+# 3. Fill in your secure passwords below:
+
+storePassword=YourSecretStorePasswordHere
+keyPassword=YourSecretKeyPasswordHere
+keyAlias=entenaadu
+storeFile=entenaadu-release.jks
